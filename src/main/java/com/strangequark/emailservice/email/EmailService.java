@@ -72,7 +72,8 @@ public class EmailService implements EmailSender {
             //Send the email
             ResponseEntity response = send(request.getRecipient(),
                     request.getSender(),
-                    isRegister ? buildUserSignupEmail("https://github.com") : isPasswordReset ? buildPasswordResetEmail("https:github.com") : request.getEmail(),
+                    isRegister ? buildUserSignupEmail("https://github.com") :
+                            isPasswordReset ? buildPasswordResetEmail("http://localhost:3001/new-password?token=" + token) : request.getEmail(),
                     request.getSubject());
             if(response.getStatusCodeValue() != 200)
                 return response;
