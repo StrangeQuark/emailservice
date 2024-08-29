@@ -99,20 +99,20 @@ public class EmailService implements EmailSender {
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
-                return ResponseEntity.status(400).body("Your token has already been confirmed");
+                return ResponseEntity.status(409).body(new ErrorResponse("The token is already confirmed", 1));
             }
 
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-                return ResponseEntity.status(400).body("Your token has already expired");
+                return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
             }
 
             confirmationTokenService.setConfirmedAt(token);
         } catch (Exception ex) {
             LoggerUtility.LOGGER.error(ex.toString());
             LoggerUtility.logStackTrace(ex);
-            return ResponseEntity.status(400).body(
-                    new ErrorResponse("There was an error in the request, please contact the system administrator")
+            return ResponseEntity.status(404).body(
+                    new ErrorResponse("Token not found")
             );
         }
 
