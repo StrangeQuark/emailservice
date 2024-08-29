@@ -23,17 +23,15 @@ public class ConfirmationToken {
     @Column(nullable=false)
     private LocalDateTime expiresAt;
     private LocalDateTime confirmedAt;
-    private String email;
 
     public ConfirmationToken() {
 
     }
 
-    public ConfirmationToken(String token, LocalDateTime createdAt, LocalDateTime expiresAt, String email) {
+    public ConfirmationToken(String token, LocalDateTime createdAt, LocalDateTime expiresAt) {
         this.token = token;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
-        this.email = email;
     }
 
     public Long getId() {
@@ -74,13 +72,5 @@ public class ConfirmationToken {
 
     public void setConfirmedAt(LocalDateTime confirmedAt) {
         this.confirmedAt = confirmedAt;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getEmail() {
-        return email;
     }
 }

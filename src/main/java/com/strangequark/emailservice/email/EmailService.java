@@ -67,7 +67,7 @@ public class EmailService implements EmailSender {
         try {
             //Create an email confirmation token
             String token = UUID.randomUUID().toString();
-            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getEmail());
+            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15));
 
             //Send the email
             ResponseEntity response = send(request.getRecipient(),
