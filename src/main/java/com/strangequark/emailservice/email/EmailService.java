@@ -1,8 +1,10 @@
 package com.strangequark.emailservice.email;
 
-import com.strangequark.emailservice.error.ErrorResponse;
+import com.strangequark.emailservice.response.ErrorResponse;
+import com.strangequark.emailservice.response.SuccessResponse;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenService;
+import com.strangequark.emailservice.utility.AuthUtility;
 import com.strangequark.emailservice.utility.LoggerUtility;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
@@ -52,7 +54,7 @@ public class EmailService implements EmailSender {
             LoggerUtility.LOGGER.error("Failed to send email: ");
             LoggerUtility.logStackTrace(ex);
             return ResponseEntity.status(400).body(
-                    new ErrorResponse("There was an error in sending the email, please contact the system administrator")
+                    new ErrorResponse("There was an response in sending the email, please contact the system administrator")
             );
         } catch(IllegalArgumentException ex) {
             LoggerUtility.LOGGER.error("Failed to send email: " + ex);
@@ -67,12 +69,12 @@ public class EmailService implements EmailSender {
         try {
             //Create an email confirmation token
             String token = UUID.randomUUID().toString();
-            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15));
+            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
 
             //Send the email
             ResponseEntity response = send(request.getRecipient(),
                     request.getSender(),
-                    isRegister ? buildUserSignupEmail("https://github.com") :
+                    isRegister ? buildUserSignupEmail("http://localhost:3001/confirm-email?token=" + token) :
                             isPasswordReset ? buildPasswordResetEmail("http://localhost:3001/new-password?token=" + token) : request.getEmail(),
                     request.getSubject());
             if(response.getStatusCodeValue() != 200)
@@ -87,7 +89,7 @@ public class EmailService implements EmailSender {
             LoggerUtility.LOGGER.error(ex.toString());
             LoggerUtility.logStackTrace(ex);
             return ResponseEntity.status(400).body(
-              new ErrorResponse("There was an error in the request, please contact the system administrator")
+              new ErrorResponse("There was an response in the request, please contact the system administrator")
             );
         }
     }
@@ -117,6 +119,36 @@ public class EmailService implements EmailSender {
         }
 
         return ResponseEntity.ok("Your account has been confirmed");
+    }
+
+    @Transactional
+    public ResponseEntity<?> enableUser(String token) {
+        try {
+            ConfirmationToken confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
+
+            //Check if the email has already been confirmed
+            if (confirmationToken.getConfirmedAt() != null) {
+                return ResponseEntity.status(409).body(new ErrorResponse("The token has already been confirmed", 1));
+            }
+
+            //Check if the token has expired
+            if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
+            }
+
+            //Call the AuthService to enable the User
+            AuthUtility.enableUser(confirmationToken.getEmail());
+
+            confirmationTokenService.setConfirmedAt(token);
+        } catch (Exception ex) {
+            LoggerUtility.LOGGER.error(ex.toString());
+            LoggerUtility.logStackTrace(ex);
+            return ResponseEntity.status(404).body(
+                    new ErrorResponse("Token not found")
+            );
+        }
+
+        return ResponseEntity.ok(new SuccessResponse("Your account has been verified"));
     }
 
 //    @Scheduled(cron = "0 0 0 * * *")//Second, minute, hour, day, month, weekday

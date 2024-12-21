@@ -4,11 +4,19 @@ The Email Service project is a Spring Boot application that handles all email re
 
 # Tools
 
-The Email Service uses Spring Boot and PostgreSQL
+The Email Service uses Spring Boot, PostgreSQL, Docker, and MailDev
 
 # Docker
 
-It is highly recommended that the service is ran using docker, you can simply use the `docker-compose up --build` command to run the application, there are no other steps needed
+It is highly recommended that the service is ran using docker, this service assumes that external networks are available
+with the names emaildb-network and shared-network. These can be created by running the following commands:
+
+`docker network create emaildb-network`
+
+`docker network create shared-network`
+
+Note that these commands only need to be run once. After the networks have been created you can simply use the 
+`docker-compose up --build` command to run the application, there are no other steps needed
 
 If you decide not to use docker, you will need to uncomment out `src/main/resources/application.properties`, you can then proceed with the next steps
 

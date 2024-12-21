@@ -1,4 +1,4 @@
-package com.strangequark.emailservice.error;
+package com.strangequark.emailservice.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -9,19 +9,19 @@ import java.time.LocalDateTime;
  */
 public class ErrorResponse {
     /**
-     * Timestamp of when the error occurred
+     * Timestamp of when the response occurred
      */
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
     private LocalDateTime timestamp;
 
     /**
-     * Message included in the error
+     * Message included in the response
      */
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private String errorMessage;
+    private String message;
 
     /**
-     * Code for the error
+     * Code for the response
      */
     @JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
     private int errorCode;
@@ -34,11 +34,11 @@ public class ErrorResponse {
     }
 
     /**
-     * Constructor if only errorMessage is passed
+     * Constructor if only message is passed
      */
-    public ErrorResponse(String errorMessage) {
+    public ErrorResponse(String message) {
         this();
-        this.errorMessage = errorMessage;
+        this.message = message;
     }
 
     /**
@@ -50,10 +50,10 @@ public class ErrorResponse {
     }
 
     /**
-     * Constructor if both errorMessage and errorCode are passed
+     * Constructor if both message and errorCode are passed
      */
-    public ErrorResponse(String errorMessage, int errorCode) {
-        this(errorMessage);
+    public ErrorResponse(String message, int errorCode) {
+        this(message);
         this.errorCode = errorCode;
     }
 }
