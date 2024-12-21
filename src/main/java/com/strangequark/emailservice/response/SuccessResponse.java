@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 /**
  * Response object for errors
  */
-public class ErrorResponse {
+public class SuccessResponse {
     /**
      * Timestamp of when the response occurred
      */
@@ -21,39 +21,17 @@ public class ErrorResponse {
     private String message;
 
     /**
-     * Code for the response
-     */
-    @JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
-    private int errorCode;
-
-    /**
      * Default constructor, set the timestamp
      */
-    public ErrorResponse() {
+    public SuccessResponse() {
         this.timestamp = LocalDateTime.now();
     }
 
     /**
-     * Constructor if only message is passed
+     * Constructor if only errorMessage is passed
      */
-    public ErrorResponse(String message) {
+    public SuccessResponse(String message) {
         this();
         this.message = message;
-    }
-
-    /**
-     * Constructor if only errorCode is passed
-     */
-    public ErrorResponse(int errorCode) {
-        this();
-        this.errorCode = errorCode;
-    }
-
-    /**
-     * Constructor if both message and errorCode are passed
-     */
-    public ErrorResponse(String message, int errorCode) {
-        this(message);
-        this.errorCode = errorCode;
     }
 }

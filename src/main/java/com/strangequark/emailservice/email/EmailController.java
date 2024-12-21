@@ -37,4 +37,9 @@ public class EmailController {
     public ResponseEntity<?> confirmToken(@RequestParam("token") String token) {
         return emailService.confirmToken(token);
     }
+
+    @GetMapping(path = "/enableUser")
+    public ResponseEntity<?> enableUser(@RequestParam("token") String token) {
+        return emailService.enableUser(token);
+    }
 }
