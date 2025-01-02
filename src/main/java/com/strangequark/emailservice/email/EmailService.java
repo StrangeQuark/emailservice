@@ -4,7 +4,7 @@ import com.strangequark.emailservice.response.ErrorResponse;
 import com.strangequark.emailservice.response.SuccessResponse;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenService;
-import com.strangequark.emailservice.utility.AuthUtility;
+import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
 import com.strangequark.emailservice.utility.LoggerUtility;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
@@ -121,7 +121,7 @@ public class EmailService implements EmailSender {
         return ResponseEntity.ok("Your account has been confirmed");
     }
 
-    @Transactional
+    @Transactional // Integration function start: Auth
     public ResponseEntity<?> enableUser(String token) {
         try {
             ConfirmationToken confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
@@ -149,7 +149,7 @@ public class EmailService implements EmailSender {
         }
 
         return ResponseEntity.ok(new SuccessResponse("Your account has been verified"));
-    }
+    } // Integration function end: Auth
 
 //    @Scheduled(cron = "0 0 0 * * *")//Second, minute, hour, day, month, weekday
 //    public void removeOldTokens() {

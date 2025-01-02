@@ -38,8 +38,8 @@ public class EmailController {
         return emailService.confirmToken(token);
     }
 
-    @GetMapping(path = "/enableUser")
+    @GetMapping(path = "/enableUser") // Integration function start: Auth
     public ResponseEntity<?> enableUser(@RequestParam("token") String token) {
         return emailService.enableUser(token);
-    }
+    } // Integration function end: Auth
 }
