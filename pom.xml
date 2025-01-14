@@ -58,14 +58,7 @@
 			<artifactId>json</artifactId>
 			<version>20240303</version>
 		</dependency>
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
-
 	</dependencies>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -74,5 +67,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>
