@@ -20,11 +20,14 @@ public abstract class BaseServiceTest {
     @Autowired
     public ConfirmationTokenRepository confirmationTokenRepository;
     @MockBean
-    JavaMailSender javaMailSender;
+    private JavaMailSender javaMailSender;
+
+    public String token;
 
     @BeforeEach
     void setup() {
-        ConfirmationToken confirmationToken = new ConfirmationToken(UUID.randomUUID().toString(), LocalDateTime.now(),
+        token = UUID.randomUUID().toString();
+        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(15), "test@test.com");
 
         confirmationTokenRepository.save(confirmationToken);
