@@ -5,6 +5,13 @@ public class EmailRequest {
     private String email;
     private String subject;
 
+    public EmailRequest(String recipient, String sender, String email, String subject) {
+        this.recipient = recipient;
+        this.sender = sender;
+        this.email = email;
+        this.subject = subject;
+    }
+
     public String getRecipient() {
         return recipient;
     }
