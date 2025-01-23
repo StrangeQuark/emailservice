@@ -20,7 +20,7 @@ public abstract class BaseServiceTest {
     @Autowired
     public ConfirmationTokenRepository confirmationTokenRepository;
     @MockBean
-    private JavaMailSender javaMailSender;
+    public JavaMailSender javaMailSender;
 
     public String token;
 
