@@ -120,7 +120,7 @@ public class EmailService implements EmailSender {
             );
         }
 
-        return ResponseEntity.ok(confirmationToken.getEmail());
+        return ResponseEntity.ok("{ \"email\": \"" + confirmationToken.getEmail() + "\" }");
     }
 
     @Transactional // Integration function start: Auth
