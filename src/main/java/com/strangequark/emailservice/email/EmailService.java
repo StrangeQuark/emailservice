@@ -96,8 +96,10 @@ public class EmailService implements EmailSender {
 
     @Transactional
     public ResponseEntity<?> confirmToken(String token) {
+        ConfirmationToken confirmationToken;
+
         try {
-            ConfirmationToken confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
+            confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
@@ -118,7 +120,7 @@ public class EmailService implements EmailSender {
             );
         }
 
-        return ResponseEntity.ok("Your account has been confirmed");
+        return ResponseEntity.ok(confirmationToken.getEmail());
     }
 
     @Transactional // Integration function start: Auth
