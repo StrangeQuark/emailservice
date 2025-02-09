@@ -1,16 +1,16 @@
 version: '1.0.0'
 
 services:
-  app:
+  email-service:
     build: .
     networks:
       - shared-network
       - emaildb-network
     ports:
       - "6005:6005"
-    container_name: email-app
+    container_name: email-service
     depends_on:
-      - db
+      - email-db
       - maildev
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
@@ -34,9 +34,9 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL}
       - SERVER_PORT=${SERVER_PORT}
       - DOCKER_DEPLOYMENT=true
-  db:
+  email-db:
     image: 'postgres:13.1-alpine'
-    container_name: email-database
+    container_name: email-db
     networks:
       - emaildb-network
     environment:
