@@ -22,7 +22,7 @@ public class AuthUtility {
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody.toString(), headers);
 
         String url = Boolean.parseBoolean(System.getenv("DOCKER_DEPLOYMENT")) ?
-                "http://auth-service:6001/user/enableUser" : "http://localhost:6001/user/enableUser";
+                "http://auth-service:6001/auth/user/enableUser" : "http://localhost:6001/auth/user/enableUser";
 
         new RestTemplate().postForObject(url, requestEntity, String.class);
     }
