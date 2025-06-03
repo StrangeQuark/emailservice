@@ -71,6 +71,7 @@ public class EmailService implements EmailSender {
     }
 
     public ResponseEntity<?> sendEmailWithToken(EmailRequest request, boolean isRegister, boolean isPasswordReset) {
+        LOGGER.info("Attempting to send an email with a token");
         try {
             //Create an email confirmation token
             String token = UUID.randomUUID().toString();
@@ -82,12 +83,15 @@ public class EmailService implements EmailSender {
                     isRegister ? buildUserSignupEmail("http://localhost:3001/confirm-email?token=" + token) :
                             isPasswordReset ? buildPasswordResetEmail("http://localhost:3001/new-password?token=" + token) : request.getEmail(),
                     request.getSubject());
-            if(response.getStatusCodeValue() != 200)
+            if(response.getStatusCodeValue() != 200) {
+                LOGGER.error(response.toString());
                 return response;
+            }
 
             //Save the confirmation token to the database
             confirmationTokenService.saveConfirmationToken(confirmationToken);
 
+            LOGGER.info("Email has been successfully sent");
             //Return the token
             return ResponseEntity.ok("Your email has been sent");
         } catch (Exception ex) {
@@ -103,16 +107,19 @@ public class EmailService implements EmailSender {
     public ResponseEntity<?> confirmToken(String token) {
         ConfirmationToken confirmationToken;
 
+        LOGGER.info("Attempting to confirm token");
         try {
             confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
+                LOGGER.error("Token has already been confirmed");
                 return ResponseEntity.status(409).body(new ErrorResponse("The token is already confirmed", 1));
             }
 
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                LOGGER.error("Token has expired");
                 return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
             }
 
@@ -125,21 +132,26 @@ public class EmailService implements EmailSender {
             );
         }
 
+        LOGGER.info("Token successfully confirmed");
         return ResponseEntity.ok("{ \"email\": \"" + confirmationToken.getEmail() + "\" }");
     }
 
     @Transactional // Integration function start: Auth
     public ResponseEntity<?> enableUser(String token) {
+        LOGGER.info("Attempting to enable user");
+
         try {
             ConfirmationToken confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
+                LOGGER.error("Token already confirmed when attempting to enable user");
                 return ResponseEntity.status(409).body(new ErrorResponse("The token has already been confirmed", 1));
             }
 
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                LOGGER.error("Token has expired when attempting to enable user");
                 return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
             }
 
@@ -155,6 +167,7 @@ public class EmailService implements EmailSender {
             );
         }
 
+        LOGGER.info("Account verified, user enabled");
         return ResponseEntity.ok(new SuccessResponse("Your account has been verified"));
     } // Integration function end: Auth
 
