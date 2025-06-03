@@ -5,7 +5,8 @@ import com.strangequark.emailservice.response.SuccessResponse;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenService;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
-import com.strangequark.emailservice.utility.LoggerUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @Configuration
 @EnableScheduling
 public class EmailService implements EmailSender {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender javaMailSender;
     private final ConfirmationTokenService confirmationTokenService;
     private final EmailValidator emailValidator;
@@ -39,6 +41,7 @@ public class EmailService implements EmailSender {
     @Override
     @Async
     public ResponseEntity<?> send(String recipient, String sender, String email, String subject) {
+        LOGGER.info("Attempting to send an email");
         try{
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 
@@ -50,16 +53,17 @@ public class EmailService implements EmailSender {
             mimeMessageHelper.setFrom(sender);
             javaMailSender.send(mimeMessage);
 
+            LOGGER.info("Email successfully sent");
             return ResponseEntity.ok("Your email has been sent");
         } catch(MessagingException ex) {
-            LoggerUtility.LOGGER.error("Failed to send email: ");
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error("Failed to send email: ");
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
                     new ErrorResponse("There was an response in sending the email, please contact the system administrator")
             );
         } catch(IllegalArgumentException ex) {
-            LoggerUtility.LOGGER.error("Failed to send email: " + ex);
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error("Failed to send email: " + ex);
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
                     new ErrorResponse(ex.getMessage())
             );
@@ -87,8 +91,8 @@ public class EmailService implements EmailSender {
             //Return the token
             return ResponseEntity.ok("Your email has been sent");
         } catch (Exception ex) {
-            LoggerUtility.LOGGER.error(ex.toString());
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error(ex.toString());
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
               new ErrorResponse("There was an response in the request, please contact the system administrator")
             );
@@ -114,8 +118,8 @@ public class EmailService implements EmailSender {
 
             confirmationTokenService.setConfirmedAt(token);
         } catch (Exception ex) {
-            LoggerUtility.LOGGER.error(ex.toString());
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error(ex.toString());
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(404).body(
                     new ErrorResponse("Token not found")
             );
@@ -144,8 +148,8 @@ public class EmailService implements EmailSender {
 
             confirmationTokenService.setConfirmedAt(token);
         } catch (Exception ex) {
-            LoggerUtility.LOGGER.error(ex.toString());
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error(ex.toString());
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(404).body(
                     new ErrorResponse("Token not found")
             );
