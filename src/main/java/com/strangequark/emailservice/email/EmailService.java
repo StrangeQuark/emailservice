@@ -5,7 +5,8 @@ import com.strangequark.emailservice.response.SuccessResponse;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenService;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
-import com.strangequark.emailservice.utility.LoggerUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @Configuration
 @EnableScheduling
 public class EmailService implements EmailSender {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender javaMailSender;
     private final ConfirmationTokenService confirmationTokenService;
     private final EmailValidator emailValidator;
@@ -39,6 +41,7 @@ public class EmailService implements EmailSender {
     @Override
     @Async
     public ResponseEntity<?> send(String recipient, String sender, String email, String subject) {
+        LOGGER.info("Attempting to send an email");
         try{
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 
@@ -50,16 +53,17 @@ public class EmailService implements EmailSender {
             mimeMessageHelper.setFrom(sender);
             javaMailSender.send(mimeMessage);
 
+            LOGGER.info("Email successfully sent");
             return ResponseEntity.ok("Your email has been sent");
         } catch(MessagingException ex) {
-            LoggerUtility.LOGGER.error("Failed to send email: ");
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error("Failed to send email: ");
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
                     new ErrorResponse("There was an response in sending the email, please contact the system administrator")
             );
         } catch(IllegalArgumentException ex) {
-            LoggerUtility.LOGGER.error("Failed to send email: " + ex);
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error("Failed to send email: " + ex);
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
                     new ErrorResponse(ex.getMessage())
             );
@@ -67,6 +71,7 @@ public class EmailService implements EmailSender {
     }
 
     public ResponseEntity<?> sendEmailWithToken(EmailRequest request, boolean isRegister, boolean isPasswordReset) {
+        LOGGER.info("Attempting to send an email with a token");
         try {
             //Create an email confirmation token
             String token = UUID.randomUUID().toString();
@@ -78,17 +83,20 @@ public class EmailService implements EmailSender {
                     isRegister ? buildUserSignupEmail("http://localhost:3001/confirm-email?token=" + token) :
                             isPasswordReset ? buildPasswordResetEmail("http://localhost:3001/new-password?token=" + token) : request.getEmail(),
                     request.getSubject());
-            if(response.getStatusCodeValue() != 200)
+            if(response.getStatusCodeValue() != 200) {
+                LOGGER.error(response.toString());
                 return response;
+            }
 
             //Save the confirmation token to the database
             confirmationTokenService.saveConfirmationToken(confirmationToken);
 
+            LOGGER.info("Email has been successfully sent");
             //Return the token
             return ResponseEntity.ok("Your email has been sent");
         } catch (Exception ex) {
-            LoggerUtility.LOGGER.error(ex.toString());
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error(ex.toString());
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
               new ErrorResponse("There was an response in the request, please contact the system administrator")
             );
@@ -99,43 +107,51 @@ public class EmailService implements EmailSender {
     public ResponseEntity<?> confirmToken(String token) {
         ConfirmationToken confirmationToken;
 
+        LOGGER.info("Attempting to confirm token");
         try {
             confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
+                LOGGER.error("Token has already been confirmed");
                 return ResponseEntity.status(409).body(new ErrorResponse("The token is already confirmed", 1));
             }
 
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                LOGGER.error("Token has expired");
                 return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
             }
 
             confirmationTokenService.setConfirmedAt(token);
         } catch (Exception ex) {
-            LoggerUtility.LOGGER.error(ex.toString());
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error(ex.toString());
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(404).body(
                     new ErrorResponse("Token not found")
             );
         }
 
+        LOGGER.info("Token successfully confirmed");
         return ResponseEntity.ok("{ \"email\": \"" + confirmationToken.getEmail() + "\" }");
     }
 
     @Transactional // Integration function start: Auth
     public ResponseEntity<?> enableUser(String token) {
+        LOGGER.info("Attempting to enable user");
+
         try {
             ConfirmationToken confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
+                LOGGER.error("Token already confirmed when attempting to enable user");
                 return ResponseEntity.status(409).body(new ErrorResponse("The token has already been confirmed", 1));
             }
 
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                LOGGER.error("Token has expired when attempting to enable user");
                 return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
             }
 
@@ -144,13 +160,14 @@ public class EmailService implements EmailSender {
 
             confirmationTokenService.setConfirmedAt(token);
         } catch (Exception ex) {
-            LoggerUtility.LOGGER.error(ex.toString());
-            LoggerUtility.logStackTrace(ex);
+            LOGGER.error(ex.toString());
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(404).body(
                     new ErrorResponse("Token not found")
             );
         }
 
+        LOGGER.info("Account verified, user enabled");
         return ResponseEntity.ok(new SuccessResponse("Your account has been verified"));
     } // Integration function end: Auth
 
