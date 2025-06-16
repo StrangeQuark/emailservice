@@ -37,11 +37,8 @@ public class EmailEventListener {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, EmailRequest> kafkaListenerContainerFactory(
-            ConsumerFactory<String, EmailRequest> consumerFactory) {
-
-        ConcurrentKafkaListenerContainerFactory<String, EmailRequest> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, EmailRequest> kafkaListenerContainerFactory(ConsumerFactory<String, EmailRequest> consumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<String, EmailRequest> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(new DefaultErrorHandler(new FixedBackOff(1000L, 2)));
 
