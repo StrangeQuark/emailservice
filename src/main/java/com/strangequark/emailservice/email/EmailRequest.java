@@ -1,9 +1,14 @@
 package com.strangequark.emailservice.email;
+
 public class EmailRequest {
     private String recipient;
     private String sender;
     private String email;
     private String subject;
+
+    public EmailRequest() {
+
+    }
 
     public EmailRequest(String recipient, String sender, String email, String subject) {
         this.recipient = recipient;
