@@ -5,8 +5,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.stereotype.Service;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +35,19 @@ public class EmailEventListener {
                 TopicBuilder.name("password-reset-email-events").partitions(1).replicas(1).build()
         );
     }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, EmailRequest> kafkaListenerContainerFactory(
+            ConsumerFactory<String, EmailRequest> consumerFactory) {
+
+        ConcurrentKafkaListenerContainerFactory<String, EmailRequest> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory);
+        factory.setCommonErrorHandler(new DefaultErrorHandler(new FixedBackOff(1000L, 2)));
+
+        return factory;
+    }
+
 
     @KafkaListener(topics = "general-email-events", groupId = "email-group")
     public void generalEmailEvents(EmailRequest emailRequest) {
