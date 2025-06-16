@@ -42,7 +42,17 @@ public class EmailService implements EmailSender {
     @Async
     public ResponseEntity<?> send(String recipient, String sender, String email, String subject) {
         LOGGER.info("Attempting to send an email");
-        try{
+
+        if(!emailValidator.test(recipient)) {
+            LOGGER.error("Invalid recipient email address");
+            return ResponseEntity.status(400).body(new ErrorResponse("Invalid recipient email address"));
+        }
+        if(!emailValidator.test(sender)) {
+            LOGGER.error("Invalid sender email address");
+            return ResponseEntity.status(400).body(new ErrorResponse("Invalid sender email address"));
+        }
+
+        try {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, "utf-8");
@@ -72,6 +82,16 @@ public class EmailService implements EmailSender {
 
     public ResponseEntity<?> sendEmailWithToken(EmailRequest request, boolean isRegister, boolean isPasswordReset) {
         LOGGER.info("Attempting to send an email with a token");
+
+        if(!emailValidator.test(request.getRecipient())) {
+            LOGGER.error("Invalid recipient email address");
+            return ResponseEntity.status(400).body(new ErrorResponse("Invalid recipient email address"));
+        }
+        if(!emailValidator.test(request.getSender())) {
+            LOGGER.error("Invalid sender email address");
+            return ResponseEntity.status(400).body(new ErrorResponse("Invalid sender email address"));
+        }
+
         try {
             //Create an email confirmation token
             String token = UUID.randomUUID().toString();
