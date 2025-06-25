@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
  * {@link RestController} responsible for health check
  */
 @RestController
-@RequestMapping("/email/health")
+@RequestMapping("/api/email/health")
 public class HealthController {
     /**
      * Get request endpoint for healthcheck

@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/email")
+@RequestMapping("/api/email")
 @CrossOrigin
 public class EmailController {
     private final EmailService emailService;
