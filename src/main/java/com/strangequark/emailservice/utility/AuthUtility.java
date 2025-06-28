@@ -21,8 +21,7 @@ public class AuthUtility {
         //Compile the HttpEntity
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody.toString(), headers);
 
-        String url = Boolean.parseBoolean(System.getenv("DOCKER_DEPLOYMENT")) ?
-                "http://auth-service:6001/auth/user/enableUser" : "http://localhost:6001/auth/user/enableUser";
+        String url = "http://auth-service:6001/api/auth/user/enable-user";
 
         new RestTemplate().postForObject(url, requestEntity, String.class);
     }
