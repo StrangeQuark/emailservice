@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -176,7 +177,14 @@ public class EmailService implements EmailSender {
             }
 
             //Call the AuthService to enable the User
-            AuthUtility.enableUser(confirmationToken.getEmail());
+            LOGGER.info("Attempting to send enableUser call to Auth service");
+            try {
+                AuthUtility.enableUser(confirmationToken.getEmail());
+            } catch (ResourceAccessException resourceAccessException) {
+                LOGGER.error("Unable to reach the Auth service");
+                LOGGER.error(resourceAccessException.getMessage());
+                return ResponseEntity.status(500).body("Error when enabling user - unable to reach auth service");
+            }
 
             confirmationTokenService.setConfirmedAt(token);
         } catch (Exception ex) {
