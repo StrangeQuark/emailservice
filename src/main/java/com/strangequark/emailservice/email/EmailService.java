@@ -101,8 +101,8 @@ public class EmailService implements EmailSender {
             //Send the email
             ResponseEntity response = send(request.getRecipient(),
                     request.getSender(),
-                    isRegister ? buildUserSignupEmail("http://localhost:3001/confirm-email?token=" + token) :
-                            isPasswordReset ? buildPasswordResetEmail("http://localhost:3001/new-password?token=" + token) : request.getEmail(),
+                    isRegister ? buildUserSignupEmail("http://localhost:6000/confirm-email?token=" + token) :
+                            isPasswordReset ? buildPasswordResetEmail("http://localhost:6000/new-password?token=" + token) : request.getEmail(),
                     request.getSubject());
             if(response.getStatusCodeValue() != 200) {
                 LOGGER.error(response.toString());
