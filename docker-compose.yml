@@ -30,8 +30,6 @@ services:
       - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT}
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL}
       - SERVER_PORT=${SERVER_PORT}
-      - DOCKER_DEPLOYMENT=true
-
   email-db:
     image: 'postgres:13.1-alpine'
     container_name: email-db
@@ -41,7 +39,6 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-
   maildev:
     image: 'maildev/maildev'
     networks:
@@ -49,7 +46,6 @@ services:
     ports:
       - "1080:1080"
       - "1025:1025"
-
   zookeeper:
     image: 'confluentinc/cp-zookeeper:7.6.0'
     container_name: zookeeper
@@ -60,7 +56,6 @@ services:
       - shared-network
     ports:
       - "2181:2181"
-
   email-kafka:
     image: 'confluentinc/cp-kafka:7.6.0'
     container_name: email-kafka
@@ -77,7 +72,6 @@ services:
       - KAFKA_LISTENERS=${KAFKA_LISTENERS}
       - KAFKA_ADVERTISED_LISTENERS=${KAFKA_ADVERTISED_LISTENERS}
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
-
 networks:
   emaildb-network:
     external: true
