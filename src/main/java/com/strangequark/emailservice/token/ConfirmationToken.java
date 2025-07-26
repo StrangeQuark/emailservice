@@ -2,26 +2,23 @@ package com.strangequark.emailservice.token;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 public class ConfirmationToken {
     @Id
-    @SequenceGenerator(
-            name = "token_sequence",
-            sequenceName = "token_sequence",
-            allocationSize = 1
-    )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "token_sequence"
-    )
-    private Long id;
+    @GeneratedValue
+    private UUID id;
+
     @Column(nullable=false)
     private String token;
+
     @Column(nullable=false)
     private LocalDateTime createdAt;
+
     @Column(nullable=false)
     private LocalDateTime expiresAt;
+
     private LocalDateTime confirmedAt;
     private String email;
 
@@ -36,11 +33,11 @@ public class ConfirmationToken {
         this.email = email;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
