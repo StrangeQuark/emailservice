@@ -95,7 +95,7 @@ public class EmailService implements EmailSender {
 
         try {
             //Create an email confirmation token
-            String token = UUID.randomUUID().toString();
+            UUID token = UUID.randomUUID();
             ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
 
             //Send the email
@@ -125,7 +125,7 @@ public class EmailService implements EmailSender {
     }
 
     @Transactional
-    public ResponseEntity<?> confirmToken(String token) {
+    public ResponseEntity<?> confirmToken(UUID token) {
         ConfirmationToken confirmationToken;
 
         LOGGER.info("Attempting to confirm token");
@@ -158,7 +158,7 @@ public class EmailService implements EmailSender {
     }
 
     @Transactional // Integration function start: Auth
-    public ResponseEntity<?> enableUser(String token) {
+    public ResponseEntity<?> enableUser(UUID token) {
         LOGGER.info("Attempting to enable user");
 
         try {

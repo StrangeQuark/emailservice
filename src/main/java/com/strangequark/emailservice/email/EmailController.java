@@ -3,6 +3,8 @@ package com.strangequark.emailservice.email;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/email")
 @CrossOrigin
@@ -34,12 +36,12 @@ public class EmailController {
     }
 
     @GetMapping(path = "/confirm-token")
-    public ResponseEntity<?> confirmToken(@RequestParam("token") String token) {
+    public ResponseEntity<?> confirmToken(@RequestParam("token") UUID token) {
         return emailService.confirmToken(token);
     }
 
     @GetMapping(path = "/enable-user") // Integration function start: Auth
-    public ResponseEntity<?> enableUser(@RequestParam("token") String token) {
+    public ResponseEntity<?> enableUser(@RequestParam("token") UUID token) {
         return emailService.enableUser(token);
     } // Integration function end: Auth
 }

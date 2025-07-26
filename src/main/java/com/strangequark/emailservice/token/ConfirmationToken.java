@@ -1,5 +1,7 @@
 package com.strangequark.emailservice.token;
 
+import com.strangequark.emailservice.utility.LocalDateTimeEncryptDecryptConverter;
+import com.strangequark.emailservice.utility.StringEncryptDecryptConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -11,22 +13,27 @@ public class ConfirmationToken {
     private UUID id;
 
     @Column(nullable=false)
-    private String token;
+    private UUID token;
+
+    @Convert(converter = StringEncryptDecryptConverter.class)
+    private String email;
 
     @Column(nullable=false)
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime createdAt;
 
     @Column(nullable=false)
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime expiresAt;
 
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime confirmedAt;
-    private String email;
 
     public ConfirmationToken() {
 
     }
 
-    public ConfirmationToken(String token, LocalDateTime createdAt, LocalDateTime expiresAt, String email) {
+    public ConfirmationToken(UUID token, LocalDateTime createdAt, LocalDateTime expiresAt, String email) {
         this.token = token;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
@@ -41,11 +48,11 @@ public class ConfirmationToken {
         this.id = id;
     }
 
-    public String getToken() {
+    public UUID getToken() {
         return token;
     }
 
-    public void setToken(String token) {
+    public void setToken(UUID token) {
         this.token = token;
     }
 

@@ -8,22 +8,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface ConfirmationTokenRepository extends JpaRepository<ConfirmationToken, Long> {
 
     @Query("SELECT t FROM ConfirmationToken t WHERE t.token = ?1")
-    Optional<ConfirmationToken> findByToken(String token);
+    Optional<ConfirmationToken> findByToken(UUID token);
 
     @Transactional
     @Modifying
     @Query("UPDATE ConfirmationToken t SET t.confirmedAt = ?2 WHERE t.token = ?1")
-    int updateConfirmedAt(String token, LocalDateTime confirmedAt);
+    int updateConfirmedAt(UUID token, LocalDateTime confirmedAt);
 
     @Transactional
     @Modifying
     @Query(value = "DELETE ConfirmationToken t WHERE t.token = ?1")
-    int deleteToken(String token);
+    int deleteToken(UUID token);
 
 //    @Transactional
 //    @Modifying

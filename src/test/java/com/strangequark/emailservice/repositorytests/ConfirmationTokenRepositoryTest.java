@@ -24,11 +24,11 @@ public class ConfirmationTokenRepositoryTest {
     @Autowired
     private ConfirmationTokenRepository confirmationTokenRepository;
 
-    String token;
+    UUID token;
 
     @BeforeEach
     void setup() {
-        token = UUID.randomUUID().toString();
+        token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), "test@test.com");
 
         testEntityManager.persistAndFlush(confirmationToken);
