@@ -2,11 +2,9 @@ package com.strangequark.emailservice.repositorytests;
 
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,6 +21,14 @@ public class ConfirmationTokenRepositoryTest {
     private TestEntityManager testEntityManager;
     @Autowired
     private ConfirmationTokenRepository confirmationTokenRepository;
+
+    @Value("${ENCRYPTION_KEY}")
+    String encryptionKey;
+
+    @BeforeAll
+    void setupEncryptionKey() {
+        System.setProperty("ENCRYPTION_KEY", encryptionKey);
+    }
 
     UUID token;
 
