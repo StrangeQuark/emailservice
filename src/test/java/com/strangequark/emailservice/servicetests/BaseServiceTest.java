@@ -22,11 +22,11 @@ public abstract class BaseServiceTest {
     @MockBean
     public JavaMailSender javaMailSender;
 
-    public String token;
+    public UUID token;
 
     @BeforeEach
     void setup() {
-        token = UUID.randomUUID().toString();
+        token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(15), "test@test.com");
 

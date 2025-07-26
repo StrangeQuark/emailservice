@@ -15,7 +15,7 @@ public class ConfirmationTokenServiceTest extends BaseServiceTest {
 
     @Test
     void saveConfirmationTokenTest() {
-        String token = UUID.randomUUID().toString();
+        UUID token = UUID.randomUUID();
 
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(15), "test@test.com");

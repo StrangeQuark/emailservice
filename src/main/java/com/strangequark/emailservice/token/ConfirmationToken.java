@@ -1,54 +1,58 @@
 package com.strangequark.emailservice.token;
 
+import com.strangequark.emailservice.utility.LocalDateTimeEncryptDecryptConverter;
+import com.strangequark.emailservice.utility.StringEncryptDecryptConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 public class ConfirmationToken {
     @Id
-    @SequenceGenerator(
-            name = "token_sequence",
-            sequenceName = "token_sequence",
-            allocationSize = 1
-    )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "token_sequence"
-    )
-    private Long id;
+    @GeneratedValue
+    private UUID id;
+
     @Column(nullable=false)
-    private String token;
-    @Column(nullable=false)
-    private LocalDateTime createdAt;
-    @Column(nullable=false)
-    private LocalDateTime expiresAt;
-    private LocalDateTime confirmedAt;
+    private UUID token;
+
+    @Convert(converter = StringEncryptDecryptConverter.class)
     private String email;
+
+    @Column(nullable=false)
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
+    private LocalDateTime createdAt;
+
+    @Column(nullable=false)
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
+    private LocalDateTime expiresAt;
+
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
+    private LocalDateTime confirmedAt;
 
     public ConfirmationToken() {
 
     }
 
-    public ConfirmationToken(String token, LocalDateTime createdAt, LocalDateTime expiresAt, String email) {
+    public ConfirmationToken(UUID token, LocalDateTime createdAt, LocalDateTime expiresAt, String email) {
         this.token = token;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
         this.email = email;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public String getToken() {
+    public UUID getToken() {
         return token;
     }
 
-    public void setToken(String token) {
+    public void setToken(UUID token) {
         this.token = token;
     }
 
