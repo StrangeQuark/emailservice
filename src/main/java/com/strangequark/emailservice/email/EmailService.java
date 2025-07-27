@@ -1,9 +1,8 @@
 package com.strangequark.emailservice.email;
 
 import com.strangequark.emailservice.response.ErrorResponse;
-import com.strangequark.emailservice.response.SuccessResponse;
 import com.strangequark.emailservice.token.ConfirmationToken;
-import com.strangequark.emailservice.token.ConfirmationTokenService;
+import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,13 +28,13 @@ import java.util.UUID;
 public class EmailService implements EmailSender {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender javaMailSender;
-    private final ConfirmationTokenService confirmationTokenService;
+    private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailValidator emailValidator;
 
 
-    public EmailService(JavaMailSender javaMailSender, ConfirmationTokenService confirmationTokenService, EmailValidator emailValidator) {
+    public EmailService(JavaMailSender javaMailSender, ConfirmationTokenRepository confirmationTokenRepository, EmailValidator emailValidator) {
         this.javaMailSender = javaMailSender;
-        this.confirmationTokenService = confirmationTokenService;
+        this.confirmationTokenRepository = confirmationTokenRepository;
         this.emailValidator = emailValidator;
     }
 
@@ -110,11 +109,11 @@ public class EmailService implements EmailSender {
             }
 
             //Save the confirmation token to the database
-            confirmationTokenService.saveConfirmationToken(confirmationToken);
+            confirmationTokenRepository.save(confirmationToken);
 
             LOGGER.info("Email has been successfully sent");
             //Return the token
-            return ResponseEntity.ok("Your email has been sent");
+            return ResponseEntity.ok(confirmationToken);
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
@@ -130,7 +129,7 @@ public class EmailService implements EmailSender {
 
         LOGGER.info("Attempting to confirm token");
         try {
-            confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
+            confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
@@ -144,7 +143,7 @@ public class EmailService implements EmailSender {
                 return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
             }
 
-            confirmationTokenService.setConfirmedAt(token);
+            confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
@@ -162,7 +161,7 @@ public class EmailService implements EmailSender {
         LOGGER.info("Attempting to enable user");
 
         try {
-            ConfirmationToken confirmationToken = confirmationTokenService.getToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
+            ConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
@@ -186,7 +185,7 @@ public class EmailService implements EmailSender {
                 return ResponseEntity.status(500).body("Error when enabling user - unable to reach auth service");
             }
 
-            confirmationTokenService.setConfirmedAt(token);
+            confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
@@ -196,7 +195,7 @@ public class EmailService implements EmailSender {
         }
 
         LOGGER.info("Account verified, user enabled");
-        return ResponseEntity.ok(new SuccessResponse("Your account has been verified"));
+        return ResponseEntity.ok("Your account has been verified");
     } // Integration function end: Auth
 
 //    @Scheduled(cron = "0 0 0 * * *")//Second, minute, hour, day, month, weekday
