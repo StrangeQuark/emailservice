@@ -1,0 +1,208 @@
+{
+	"info": {
+		"_postman_id": "e5ced3ca-1c90-4a8b-8b84-9ebee7a9725a",
+		"name": "EmailService",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29355577"
+	},
+	"item": [
+		{
+			"name": "Send Email",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"email\": \"Test email body\",\r\n    \"subject\": \"Test email subject\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6005/api/email/send-email",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6005",
+					"path": [
+						"api",
+						"email",
+						"send-email"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send Email With Token",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"email\": \"Test email body with token\",\r\n    \"subject\": \"Test email subject with token\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6005/api/email/send-email-with-token",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6005",
+					"path": [
+						"api",
+						"email",
+						"send-email-with-token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send Register Email",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"subject\": \"Test register email subject\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6005/api/email/send-register-email",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6005",
+					"path": [
+						"api",
+						"email",
+						"send-register-email"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send Password Reset Email",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"subject\": \"Test password reset email subject\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6005/api/email/send-password-reset-email",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6005",
+					"path": [
+						"api",
+						"email",
+						"send-password-reset-email"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Confirm token",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6005/api/email/confirm-token?token=34e80f73-1a8d-4908-be79-749e846ca885",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6005",
+					"path": [
+						"api",
+						"email",
+						"confirm-token"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "34e80f73-1a8d-4908-be79-749e846ca885"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Enable user",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6005/api/email/enable-user?token=b3c02a50-bbdb-4bf2-a0b7-95b2cf0af503",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6005",
+					"path": [
+						"api",
+						"email",
+						"enable-user"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "b3c02a50-bbdb-4bf2-a0b7-95b2cf0af503"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
