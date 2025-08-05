@@ -2,6 +2,7 @@ package com.strangequark.emailservice.servicetests;
 
 import com.strangequark.emailservice.email.EmailRequest;
 import com.strangequark.emailservice.email.EmailService;
+import com.strangequark.emailservice.response.ErrorResponse;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
+
+import java.util.UUID;
 
 public class EmailServiceTest extends BaseServiceTest {
     @Autowired
@@ -48,4 +51,13 @@ public class EmailServiceTest extends BaseServiceTest {
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertNotNull(confirmationTokenRepository.findByToken(token).get().getConfirmedAt());
     }
+
+    // Integration function start: Auth
+    @Test
+    void enableUserTest() {
+        ResponseEntity<?> response = emailService.enableUser(UUID.randomUUID());
+
+        Assertions.assertEquals(404, response.getStatusCode().value());
+        Assertions.assertEquals("Token not found", ((ErrorResponse) response.getBody()).getMessage());
+    }// Integration function end: Auth
 }
