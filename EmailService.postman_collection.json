@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "e5ced3ca-1c90-4a8b-8b84-9ebee7a9725a",
-		"name": "Emailservice",
+		"name": "EmailService",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "29355577"
 	},
