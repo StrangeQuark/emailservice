@@ -7,6 +7,39 @@
 	},
 	"item": [
 		{
+			"name": "Healthcheck",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6005/api/email/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6005",
+					"path": [
+						"api",
+						"email",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Send Email",
 			"request": {
 				"method": "POST",
