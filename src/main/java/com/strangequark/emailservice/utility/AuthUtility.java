@@ -3,15 +3,71 @@
 package com.strangequark.emailservice.utility;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
 public class AuthUtility {
-    public static void enableUser(String email) {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthUtility.class);
+
+    @Value("${SERVICE_SECRET_EMAIL}")
+    private String SERVICE_SECRET_EMAIL;
+
+    public String authenticateServiceAccount() {
+        try {
+            LOGGER.info("Attempting to authenticate service account");
+
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("clientId", "email");
+            requestBody.put("clientPassword", SERVICE_SECRET_EMAIL);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
+
+            String response = new RestTemplate().postForObject(
+                    "http://auth-service:6001/api/auth/service-account/authenticate",
+                    requestEntity,
+                    String.class
+            );
+
+            response = response.replace("\"", "");
+            response = response.replace("}", "");
+
+            LOGGER.info(response);
+            LOGGER.info((response.indexOf("jwtToken:") + 9) + "");
+            LOGGER.info(String.valueOf(response.contains("jwtToken")));
+
+            if(!response.contains("jwtToken"))
+                throw new RuntimeException("jwtToken not found in authentication response");
+
+            LOGGER.info("Service account authentication success");
+            return response.substring(response.indexOf("jwtToken:") + 9).trim();
+        } catch (RestClientException ex) {
+            LOGGER.error(ex.getMessage());
+            return null;
+        }
+    }
+
+    public void enableUser(String email) {
+        LOGGER.info("Attempting to enable user");
+
+        String accessToken = authenticateServiceAccount();
+
         //Set the headers
         HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         //Create the request body

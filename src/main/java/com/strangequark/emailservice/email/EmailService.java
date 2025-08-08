@@ -6,6 +6,7 @@ import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,6 +32,8 @@ public class EmailService implements EmailSender {
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailValidator emailValidator;
 
+    @Autowired// Integration line: Auth
+    AuthUtility authUtility;// Integration line: Auth
 
     public EmailService(JavaMailSender javaMailSender, ConfirmationTokenRepository confirmationTokenRepository, EmailValidator emailValidator) {
         this.javaMailSender = javaMailSender;
@@ -178,7 +181,7 @@ public class EmailService implements EmailSender {
             //Call the AuthService to enable the User
             LOGGER.info("Attempting to send enableUser call to Auth service");
             try {
-                AuthUtility.enableUser(confirmationToken.getEmail());
+                authUtility.enableUser(confirmationToken.getEmail());
             } catch (ResourceAccessException resourceAccessException) {
                 LOGGER.error("Unable to reach the Auth service");
                 LOGGER.error(resourceAccessException.getMessage());
