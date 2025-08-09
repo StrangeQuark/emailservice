@@ -42,6 +42,16 @@
 		{
 			"name": "Send Email",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -72,6 +82,16 @@
 		{
 			"name": "Send Email With Token",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -102,6 +122,16 @@
 		{
 			"name": "Send Register Email",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -132,6 +162,16 @@
 		{
 			"name": "Send Password Reset Email",
 			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -177,7 +217,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:6005/api/email/confirm-token?token=34e80f73-1a8d-4908-be79-749e846ca885",
+					"raw": "http://localhost:6005/api/email/confirm-token?token=03fe7c1a-3ae2-4bcc-b3bc-36f33e4e16ba",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -191,7 +231,7 @@
 					"query": [
 						{
 							"key": "token",
-							"value": "34e80f73-1a8d-4908-be79-749e846ca885"
+							"value": "03fe7c1a-3ae2-4bcc-b3bc-36f33e4e16ba"
 						}
 					]
 				}
@@ -216,7 +256,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:6005/api/email/enable-user?token=b3c02a50-bbdb-4bf2-a0b7-95b2cf0af503",
+					"raw": "http://localhost:6005/api/email/enable-user?token=4678e980-5202-4750-8163-0abe940d2049",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -230,7 +270,7 @@
 					"query": [
 						{
 							"key": "token",
-							"value": "b3c02a50-bbdb-4bf2-a0b7-95b2cf0af503"
+							"value": "4678e980-5202-4750-8163-0abe940d2049"
 						}
 					]
 				}
