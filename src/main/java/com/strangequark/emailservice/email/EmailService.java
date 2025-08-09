@@ -4,6 +4,7 @@ import com.strangequark.emailservice.response.ErrorResponse;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
+import com.strangequark.emailservice.utility.JwtUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +33,11 @@ public class EmailService implements EmailSender {
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailValidator emailValidator;
 
-    @Autowired// Integration line: Auth
-    AuthUtility authUtility;// Integration line: Auth
+    @Autowired// Integration function start: Auth
+    AuthUtility authUtility;
+
+    @Autowired
+    JwtUtility jwtUtility;// Integration function end: Auth
 
     public EmailService(JavaMailSender javaMailSender, ConfirmationTokenRepository confirmationTokenRepository, EmailValidator emailValidator) {
         this.javaMailSender = javaMailSender;
@@ -45,6 +49,11 @@ public class EmailService implements EmailSender {
     @Async
     public ResponseEntity<?> send(String recipient, String sender, String email, String subject) {
         LOGGER.info("Attempting to send an email");
+
+        if(!jwtUtility.validateToken()) {
+            LOGGER.error("Invalid JWT token");
+            return ResponseEntity.status(400).body(new ErrorResponse("Invalid JWT token"));
+        }
 
         if(!emailValidator.test(recipient)) {
             LOGGER.error("Invalid recipient email address");
@@ -85,6 +94,11 @@ public class EmailService implements EmailSender {
 
     public ResponseEntity<?> sendEmailWithToken(EmailRequest request, boolean isRegister, boolean isPasswordReset) {
         LOGGER.info("Attempting to send an email with a token");
+
+        if(!jwtUtility.validateToken()) {
+            LOGGER.error("Invalid JWT token");
+            return ResponseEntity.status(400).body(new ErrorResponse("Invalid JWT token"));
+        }
 
         if(!emailValidator.test(request.getRecipient())) {
             LOGGER.error("Invalid recipient email address");
@@ -128,9 +142,10 @@ public class EmailService implements EmailSender {
 
     @Transactional
     public ResponseEntity<?> confirmToken(UUID token) {
+        LOGGER.info("Attempting to confirm token");
+
         ConfirmationToken confirmationToken;
 
-        LOGGER.info("Attempting to confirm token");
         try {
             confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
