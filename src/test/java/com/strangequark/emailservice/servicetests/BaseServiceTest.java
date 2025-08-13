@@ -2,6 +2,7 @@ package com.strangequark.emailservice.servicetests;
 
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
+import com.strangequark.emailservice.utility.JwtUtility;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -15,27 +16,32 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static org.mockito.Mockito.when;
+
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
 public abstract class BaseServiceTest {
+
+    static {
+        System.setProperty("ENCRYPTION_KEY", "8C636049C7763F06A35A17E86A542B15");
+        System.setProperty("SERVICE_SECRET_EMAIL", "testClientPassword");
+        System.setProperty("ACCESS_SECRET_KEY", "4C96564053ADF2405FA490EDE8DE779CA8568689F47BBBF63BE58313CE1C0531");
+    }
+
     @Autowired
     public ConfirmationTokenRepository confirmationTokenRepository;
     @MockitoBean
     public JavaMailSender javaMailSender;
+    @MockitoBean
+    public JwtUtility jwtUtility;
 
     public UUID token;
 
-    @Value("${ENCRYPTION_KEY}")
-    String encryptionKey;
-
-    @BeforeAll
-    void setupEncryptionKey() {
-        System.setProperty("ENCRYPTION_KEY", encryptionKey);
-    }
-
     @BeforeEach
     void setup() {
+        when(jwtUtility.validateToken()).thenReturn(true);
+
         token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(15), "test@test.com");

@@ -17,18 +17,17 @@ import java.util.UUID;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
 public class ConfirmationTokenRepositoryTest {
+
+    static {
+        System.setProperty("ENCRYPTION_KEY", "8C636049C7763F06A35A17E86A542B15");
+        System.setProperty("SERVICE_SECRET_EMAIL", "testClientPassword");
+        System.setProperty("ACCESS_SECRET_KEY", "4C96564053ADF2405FA490EDE8DE779CA8568689F47BBBF63BE58313CE1C0531");
+    }
+
     @Autowired
     private TestEntityManager testEntityManager;
     @Autowired
     private ConfirmationTokenRepository confirmationTokenRepository;
-
-    @Value("${ENCRYPTION_KEY}")
-    String encryptionKey;
-
-    @BeforeAll
-    void setupEncryptionKey() {
-        System.setProperty("ENCRYPTION_KEY", encryptionKey);
-    }
 
     UUID token;
 

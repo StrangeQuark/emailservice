@@ -2,7 +2,7 @@ package com.strangequark.emailservice.servicetests;
 
 import com.strangequark.emailservice.email.EmailRequest;
 import com.strangequark.emailservice.email.EmailService;
-import com.strangequark.emailservice.response.ErrorResponse;
+import com.strangequark.emailservice.response.Response;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,6 +58,6 @@ public class EmailServiceTest extends BaseServiceTest {
         ResponseEntity<?> response = emailService.enableUser(UUID.randomUUID());
 
         Assertions.assertEquals(404, response.getStatusCode().value());
-        Assertions.assertEquals("Token not found", ((ErrorResponse) response.getBody()).getMessage());
+        Assertions.assertEquals("Token not found", ((Response) response.getBody()).getMessage());
     }// Integration function end: Auth
 }
