@@ -1,6 +1,6 @@
 package com.strangequark.emailservice.email;
 
-import com.strangequark.emailservice.response.ErrorResponse;
+import com.strangequark.emailservice.response.Response;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
@@ -52,16 +52,16 @@ public class EmailService implements EmailSender {
 
         if(!jwtUtility.validateToken()) {
             LOGGER.error("Invalid JWT token");
-            return ResponseEntity.status(400).body(new ErrorResponse("Invalid JWT token"));
+            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
         }
 
         if(!emailValidator.test(recipient)) {
             LOGGER.error("Invalid recipient email address");
-            return ResponseEntity.status(400).body(new ErrorResponse("Invalid recipient email address"));
+            return ResponseEntity.status(400).body(new Response("Invalid recipient email address"));
         }
         if(!emailValidator.test(sender)) {
             LOGGER.error("Invalid sender email address");
-            return ResponseEntity.status(400).body(new ErrorResponse("Invalid sender email address"));
+            return ResponseEntity.status(400).body(new Response("Invalid sender email address"));
         }
 
         try {
@@ -76,18 +76,18 @@ public class EmailService implements EmailSender {
             javaMailSender.send(mimeMessage);
 
             LOGGER.info("Email successfully sent");
-            return ResponseEntity.ok("Your email has been sent");
+            return ResponseEntity.ok(new Response("Your email has been sent"));
         } catch(MessagingException ex) {
             LOGGER.error("Failed to send email: ");
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
-                    new ErrorResponse("There was an response in sending the email, please contact the system administrator")
+                    new Response("There was an response in sending the email, please contact the system administrator")
             );
         } catch(IllegalArgumentException ex) {
             LOGGER.error("Failed to send email: " + ex);
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
-                    new ErrorResponse(ex.getMessage())
+                    new Response(ex.getMessage())
             );
         }
     }
@@ -97,16 +97,16 @@ public class EmailService implements EmailSender {
 
         if(!jwtUtility.validateToken()) {
             LOGGER.error("Invalid JWT token");
-            return ResponseEntity.status(400).body(new ErrorResponse("Invalid JWT token"));
+            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
         }
 
         if(!emailValidator.test(request.getRecipient())) {
             LOGGER.error("Invalid recipient email address");
-            return ResponseEntity.status(400).body(new ErrorResponse("Invalid recipient email address"));
+            return ResponseEntity.status(400).body(new Response("Invalid recipient email address"));
         }
         if(!emailValidator.test(request.getSender())) {
             LOGGER.error("Invalid sender email address");
-            return ResponseEntity.status(400).body(new ErrorResponse("Invalid sender email address"));
+            return ResponseEntity.status(400).body(new Response("Invalid sender email address"));
         }
 
         try {
@@ -130,12 +130,12 @@ public class EmailService implements EmailSender {
 
             LOGGER.info("Email has been successfully sent");
             //Return the token
-            return ResponseEntity.ok(confirmationToken);
+            return ResponseEntity.ok(new Response("Email with token successfully sent"));
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(
-              new ErrorResponse("There was an response in the request, please contact the system administrator")
+              new Response("There was an response in the request, please contact the system administrator")
             );
         }
     }
@@ -152,13 +152,13 @@ public class EmailService implements EmailSender {
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
                 LOGGER.error("Token has already been confirmed");
-                return ResponseEntity.status(409).body(new ErrorResponse("The token is already confirmed", 1));
+                return ResponseEntity.status(409).body(new Response("The token is already confirmed"));
             }
 
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                 LOGGER.error("Token has expired");
-                return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
+                return ResponseEntity.status(409).body(new Response("The token has expired"));
             }
 
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
@@ -166,12 +166,12 @@ public class EmailService implements EmailSender {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(404).body(
-                    new ErrorResponse("Token not found")
+                    new Response("Token not found")
             );
         }
 
         LOGGER.info("Token successfully confirmed");
-        return ResponseEntity.ok("{ \"email\": \"" + confirmationToken.getEmail() + "\" }");
+        return ResponseEntity.ok(new Response("Token successfully confirmed"));
     }
 
     @Transactional // Integration function start: Auth
@@ -184,13 +184,13 @@ public class EmailService implements EmailSender {
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
                 LOGGER.error("Token already confirmed when attempting to enable user");
-                return ResponseEntity.status(409).body(new ErrorResponse("The token has already been confirmed", 1));
+                return ResponseEntity.status(409).body(new Response("The token has already been confirmed"));
             }
 
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                 LOGGER.error("Token has expired when attempting to enable user");
-                return ResponseEntity.status(409).body(new ErrorResponse("The token has expired", 2));
+                return ResponseEntity.status(409).body(new Response("The token has expired"));
             }
 
             //Call the AuthService to enable the User
@@ -200,7 +200,7 @@ public class EmailService implements EmailSender {
             } catch (ResourceAccessException resourceAccessException) {
                 LOGGER.error("Unable to reach the Auth service");
                 LOGGER.error(resourceAccessException.getMessage());
-                return ResponseEntity.status(500).body("Error when enabling user - unable to reach auth service");
+                return ResponseEntity.status(500).body(new Response("Error when enabling user - unable to reach auth service"));
             }
 
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
@@ -208,12 +208,12 @@ public class EmailService implements EmailSender {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(404).body(
-                    new ErrorResponse("Token not found")
+                    new Response("Token not found")
             );
         }
 
         LOGGER.info("Account verified, user enabled");
-        return ResponseEntity.ok("Your account has been verified");
+        return ResponseEntity.ok(new Response("Account verified, user enabled"));
     } // Integration function end: Auth
 
 //    @Scheduled(cron = "0 0 0 * * *")//Second, minute, hour, day, month, weekday
