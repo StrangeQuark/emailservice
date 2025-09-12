@@ -1,3 +1,5 @@
+// Integration file: Auth
+
 package com.strangequark.emailservice.utility;
 
 import io.jsonwebtoken.Jwts;
