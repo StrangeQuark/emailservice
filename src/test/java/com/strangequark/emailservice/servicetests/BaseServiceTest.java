@@ -2,12 +2,10 @@ package com.strangequark.emailservice.servicetests;
 
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
-import com.strangequark.emailservice.utility.JwtUtility;
-import org.junit.jupiter.api.BeforeAll;
+import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
@@ -25,22 +23,22 @@ public abstract class BaseServiceTest {
 
     static {
         System.setProperty("ENCRYPTION_KEY", "8C636049C7763F06A35A17E86A542B15");
-        System.setProperty("SERVICE_SECRET_EMAIL", "testClientPassword");
-        System.setProperty("ACCESS_SECRET_KEY", "4C96564053ADF2405FA490EDE8DE779CA8568689F47BBBF63BE58313CE1C0531");
+        System.setProperty("SERVICE_SECRET_EMAIL", "testClientPassword"); // Integration line: Auth
+        System.setProperty("ACCESS_SECRET_KEY", "4C96564053ADF2405FA490EDE8DE779CA8568689F47BBBF63BE58313CE1C0531"); // Integration line: Auth
     }
 
     @Autowired
     public ConfirmationTokenRepository confirmationTokenRepository;
     @MockitoBean
     public JavaMailSender javaMailSender;
-    @MockitoBean
-    public JwtUtility jwtUtility;
+    @MockitoBean // Integration line: Auth
+    public JwtUtility jwtUtility; // Integration line: Auth
 
     public UUID token;
 
     @BeforeEach
     void setup() {
-        when(jwtUtility.validateToken()).thenReturn(true);
+        when(jwtUtility.validateToken()).thenReturn(true); // Integration line: Auth
 
         token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),

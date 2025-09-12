@@ -4,7 +4,7 @@ import com.strangequark.emailservice.response.Response;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
-import com.strangequark.emailservice.utility.JwtUtility;
+import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,10 +50,11 @@ public class EmailService implements EmailSender {
     public ResponseEntity<?> send(String recipient, String sender, String email, String subject) {
         LOGGER.info("Attempting to send an email");
 
+        // Integration function start: Auth
         if(!jwtUtility.validateToken()) {
             LOGGER.error("Invalid JWT token");
             return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
-        }
+        } // Integration function end: Auth
 
         if(!emailValidator.test(recipient)) {
             LOGGER.error("Invalid recipient email address");
@@ -95,10 +96,11 @@ public class EmailService implements EmailSender {
     public ResponseEntity<?> sendEmailWithToken(EmailRequest request, boolean isRegister, boolean isPasswordReset) {
         LOGGER.info("Attempting to send an email with a token");
 
+        // Integration function start: Auth
         if(!jwtUtility.validateToken()) {
             LOGGER.error("Invalid JWT token");
             return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
-        }
+        } // Integration function end: Auth
 
         if(!emailValidator.test(request.getRecipient())) {
             LOGGER.error("Invalid recipient email address");
