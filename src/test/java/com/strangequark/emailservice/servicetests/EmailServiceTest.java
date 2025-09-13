@@ -51,7 +51,6 @@ public class EmailServiceTest extends BaseServiceTest {
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertNotNull(confirmationTokenRepository.findByToken(token).get().getConfirmedAt());
     }
-
     // Integration function start: Auth
     @Test
     void enableUserTest() {

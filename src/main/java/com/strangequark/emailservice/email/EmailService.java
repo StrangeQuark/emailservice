@@ -32,8 +32,8 @@ public class EmailService implements EmailSender {
     private final JavaMailSender javaMailSender;
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailValidator emailValidator;
-
-    @Autowired// Integration function start: Auth
+    // Integration function start: Auth
+    @Autowired
     AuthUtility authUtility;
 
     @Autowired
@@ -54,8 +54,8 @@ public class EmailService implements EmailSender {
         if(!jwtUtility.validateToken()) {
             LOGGER.error("Invalid JWT token");
             return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
-        } // Integration function end: Auth
-
+        }
+        // Integration function end: Auth
         if(!emailValidator.test(recipient)) {
             LOGGER.error("Invalid recipient email address");
             return ResponseEntity.status(400).body(new Response("Invalid recipient email address"));
@@ -100,8 +100,8 @@ public class EmailService implements EmailSender {
         if(!jwtUtility.validateToken()) {
             LOGGER.error("Invalid JWT token");
             return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
-        } // Integration function end: Auth
-
+        }
+        // Integration function end: Auth
         if(!emailValidator.test(request.getRecipient())) {
             LOGGER.error("Invalid recipient email address");
             return ResponseEntity.status(400).body(new Response("Invalid recipient email address"));
@@ -216,17 +216,8 @@ public class EmailService implements EmailSender {
 
         LOGGER.info("Account verified, user enabled");
         return ResponseEntity.ok(new Response("Account verified, user enabled"));
-    } // Integration function end: Auth
-
-//    @Scheduled(cron = "0 0 0 * * *")//Second, minute, hour, day, month, weekday
-//    public void removeOldTokens() {
-//        try {
-//
-//        } catch (Exception ex) {
-//
-//        }
-//    }
-
+    }
+    // Integration function end: Auth
     private String buildUserSignupEmail(String link) {
         return "<div style=\"font-family:Helvetica,Arial,sans-serif;font-size:16px;margin:0;color:#0b0c0c\">\n" +
                 "\n" +
