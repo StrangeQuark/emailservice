@@ -39,8 +39,8 @@ public class EmailController {
     public ResponseEntity<?> confirmToken(@RequestParam("token") UUID token) {
         return emailService.confirmToken(token);
     }
-
-    @GetMapping(path = "/enable-user") // Integration function start: Auth
+    // Integration function start: Auth
+    @GetMapping(path = "/enable-user")
     public ResponseEntity<?> enableUser(@RequestParam("token") UUID token) {
         return emailService.enableUser(token);
     } // Integration function end: Auth
