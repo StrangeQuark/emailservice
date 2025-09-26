@@ -117,12 +117,12 @@ public class EmailService implements EmailSender {
             ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
 
             //Send the email
-            ResponseEntity response = send(request.getRecipient(),
+            ResponseEntity<?> response = send(request.getRecipient(),
                     request.getSender(),
                     isRegister ? buildUserSignupEmail("http://localhost:6080/confirm-email?token=" + token) :
                             isPasswordReset ? buildPasswordResetEmail("http://localhost:6080/new-password?token=" + token) : request.getEmail(),
                     request.getSubject());
-            if(response.getStatusCodeValue() != 200) {
+            if(response.getStatusCode().value() != 200) {
                 LOGGER.error(response.toString());
                 return response;
             }
@@ -132,7 +132,7 @@ public class EmailService implements EmailSender {
 
             LOGGER.info("Email has been successfully sent");
             //Return the token
-            return ResponseEntity.ok(new Response("Email with token successfully sent"));
+            return ResponseEntity.ok(new Response("Email with token successfully sent", token.toString()));
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
