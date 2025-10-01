@@ -43,5 +43,10 @@ public class EmailController {
     @GetMapping(path = "/enable-user")
     public ResponseEntity<?> enableUser(@RequestParam("token") UUID token) {
         return emailService.enableUser(token);
+    }
+
+    @PostMapping(path = "/reset-user-password")
+    public ResponseEntity<?> resetUserPassword(@RequestParam("token") UUID token, @RequestParam("newPassword") String newPassword) {
+        return emailService.resetUserPassword(token, newPassword);
     } // Integration function end: Auth
 }

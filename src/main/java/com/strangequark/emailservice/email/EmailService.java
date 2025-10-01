@@ -132,7 +132,7 @@ public class EmailService implements EmailSender {
 
             LOGGER.info("Email has been successfully sent");
             //Return the token
-            return ResponseEntity.ok(new Response("Email with token successfully sent", token.toString()));
+            return ResponseEntity.ok(new Response("Email with token successfully sent", token));
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
@@ -173,10 +173,10 @@ public class EmailService implements EmailSender {
         }
 
         LOGGER.info("Token successfully confirmed");
-        return ResponseEntity.ok(new Response("Token successfully confirmed"));
+        return ResponseEntity.ok(new Response("Token successfully confirmed", confirmationToken.getEmail()));
     }
-
-    @Transactional // Integration function start: Auth
+    // Integration function start: Auth
+    @Transactional
     public ResponseEntity<?> enableUser(UUID token) {
         LOGGER.info("Attempting to enable user");
 
@@ -216,6 +216,39 @@ public class EmailService implements EmailSender {
 
         LOGGER.info("Account verified, user enabled");
         return ResponseEntity.ok(new Response("Account verified, user enabled"));
+    }
+
+    @Transactional
+    public ResponseEntity<?> resetUserPassword(UUID token, String newPassword) {
+        LOGGER.info("Attempting to confirm token and reset user password");
+
+        ConfirmationToken confirmationToken;
+
+        try {
+            confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
+
+            //Check if the email has already been confirmed
+            if (confirmationToken.getConfirmedAt() != null) {
+                LOGGER.error("Token has already been confirmed");
+                return ResponseEntity.status(409).body(new Response("The token is already confirmed"));
+            }
+
+            //Check if the token has expired
+            if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+                LOGGER.error("Token has expired");
+                return ResponseEntity.status(409).body(new Response("The token has expired"));
+            }
+
+            confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
+
+            authUtility.resetPassword(confirmationToken.getEmail(), newPassword);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(404).body(new Response(ex.getMessage()));
+        }
+
+        LOGGER.info("User password successfully reset");
+        return ResponseEntity.ok(new Response("User password successfully reset", confirmationToken.getEmail()));
     }
     // Integration function end: Auth
     private String buildUserSignupEmail(String link) {
