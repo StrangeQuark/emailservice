@@ -1,6 +1,8 @@
 package com.strangequark.emailservice.email;
 
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.header.Header; // Integration line: Auth
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -9,8 +11,11 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.mock.web.MockHttpServletRequest; // Integration line: Auth
 import org.springframework.stereotype.Service;
 import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.web.context.request.RequestContextHolder; // Integration line: Auth
+import org.springframework.web.context.request.ServletRequestAttributes; // Integration line: Auth
 
 import java.util.Collection;
 import java.util.List;
@@ -47,30 +52,59 @@ public class EmailEventListener {
 
 
     @KafkaListener(topics = "general-email-events", groupId = "email-group")
-    public void generalEmailEvents(EmailRequest emailRequest) {
+    public void generalEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("General email event received");
+        EmailRequest emailRequest = record.value();
+        setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
 
         emailService.send(emailRequest.getRecipient(), emailRequest.getSender(), emailRequest.getEmail(), emailRequest.getSubject());
     }
 
     @KafkaListener(topics = "token-email-events", groupId = "email-group")
-    public void tokenEmailEvents(EmailRequest emailRequest) {
+    public void tokenEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("Token email event received");
+        EmailRequest emailRequest = record.value();
+        setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
 
         emailService.sendEmailWithToken(emailRequest, false, false);
     }
 
     @KafkaListener(topics = "register-email-events", groupId = "email-group")
-    public void registerEmailEvents(EmailRequest emailRequest) {
+    public void registerEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("Register email event received");
+        EmailRequest emailRequest = record.value();
+        setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
 
         emailService.sendEmailWithToken(emailRequest, true, false);
     }
 
     @KafkaListener(topics = "password-reset-email-events", groupId = "email-group")
-    public void passwordResetEmailEvents(EmailRequest emailRequest) {
+    public void passwordResetEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("Password reset email event received");
+        EmailRequest emailRequest = record.value();
+        setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
 
         emailService.sendEmailWithToken(emailRequest, false, true);
     }
+    // Integration function start: Auth
+    public void setAuthHeaderFromKafkaConsumerRecord(ConsumerRecord<String, EmailRequest> record) {
+        LOGGER.info("Setting authorization header from Kafka consumer record");
+
+        // Extract JWT from Kafka header
+        Header authHeader = record.headers().lastHeader("Authorization");
+        if (authHeader == null) {
+            LOGGER.error("Missing Authorization header in Kafka message");
+            return;
+        }
+        String token = new String(authHeader.value());
+
+        // Create a mock request with Authorization header
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("Authorization", token);
+
+        // Bind the mock request to the current thread
+        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
+        RequestContextHolder.setRequestAttributes(attrs);
+        LOGGER.info("Kafka consumer auth header set");
+    } // Integration function end: Auth
 }

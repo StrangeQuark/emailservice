@@ -2,6 +2,7 @@
 
 package com.strangequark.emailservice.utility;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,22 +60,26 @@ public class AuthUtility {
     public void enableUser(String email) {
         LOGGER.info("Attempting to enable user");
 
-        String accessToken = authenticateServiceAccount();
+        try {
+            String accessToken = authenticateServiceAccount();
 
-        //Set the headers
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+            //Set the headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(accessToken);
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-        //Create the request body
-        JSONObject requestBody = new JSONObject();
-        requestBody.put("email", email);
+            //Create the request body
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("email", email);
 
-        //Compile the HttpEntity
-        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody.toString(), headers);
+            //Compile the HttpEntity
+            HttpEntity<String> requestEntity = new HttpEntity<>(requestBody.toString(), headers);
 
-        String url = "http://auth-service:6001/api/auth/user/enable-user";
+            String url = "http://auth-service:6001/api/auth/user/enable-user";
 
-        new RestTemplate().postForObject(url, requestEntity, String.class);
+            new RestTemplate().postForObject(url, requestEntity, String.class);
+        } catch (JSONException ex) {
+            LOGGER.error(ex.getMessage());
+        }
     }
 }
