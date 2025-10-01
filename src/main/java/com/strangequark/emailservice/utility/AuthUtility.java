@@ -82,4 +82,31 @@ public class AuthUtility {
             LOGGER.error(ex.getMessage());
         }
     }
+
+    public void resetPassword(String email, String newPassword) {
+        LOGGER.info("Attempting to reset user password");
+
+        try {
+            String accessToken = authenticateServiceAccount();
+
+            //Set the headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(accessToken);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            //Create the request body
+            JSONObject requestBody = new JSONObject();
+            requestBody.put("email", email);
+            requestBody.put("newPassword", newPassword);
+
+            //Compile the HttpEntity
+            HttpEntity<String> requestEntity = new HttpEntity<>(requestBody.toString(), headers);
+
+            String url = "http://auth-service:6001/api/auth/user/reset-password";
+
+            new RestTemplate().postForObject(url, requestEntity, String.class);
+        } catch (JSONException ex) {
+            LOGGER.error(ex.getMessage());
+        }
+    }
 }
