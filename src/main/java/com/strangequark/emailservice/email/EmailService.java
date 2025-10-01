@@ -254,8 +254,8 @@ public class EmailService implements EmailSender {
 
         LOGGER.info("User password successfully reset");
         return ResponseEntity.ok(new Response("User password successfully reset", confirmationToken.getEmail()));
-    }
-    // Integration function end: Auth
+    }// Integration function end: Auth
+
     private String buildUserSignupEmail(String link) {
         return "<div style=\"font-family:Helvetica,Arial,sans-serif;font-size:16px;margin:0;color:#0b0c0c\">\n" +
                 "\n" +

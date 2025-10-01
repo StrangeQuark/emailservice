@@ -58,5 +58,13 @@ public class EmailServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(404, response.getStatusCode().value());
         Assertions.assertEquals("Token not found", ((Response) response.getBody()).getMessage());
+    }
+
+    @Test
+    void resetUserPasswordTest() {
+        ResponseEntity<?> response = emailService.resetUserPassword(UUID.randomUUID(), "newPassword");
+
+        Assertions.assertEquals(404, response.getStatusCode().value());
+        Assertions.assertEquals("Token not found", ((Response) response.getBody()).getMessage());
     }// Integration function end: Auth
 }
