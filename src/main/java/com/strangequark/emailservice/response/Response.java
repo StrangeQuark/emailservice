@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Response {
@@ -16,6 +17,9 @@ public class Response {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private String token;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private String email;
+
     public Response() {
         this.timestamp = LocalDateTime.now();
     }
@@ -25,9 +29,14 @@ public class Response {
         this.message = message;
     }
 
-    public Response(String message, String token) {
+    public Response(String message, UUID token) {
         this(message);
-        this.token = token;
+        this.token = token.toString();
+    }
+
+    public Response(String message, String email) {
+        this(message);
+        this.email = email;
     }
 
     public LocalDateTime getTimestamp() {
@@ -48,5 +57,13 @@ public class Response {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

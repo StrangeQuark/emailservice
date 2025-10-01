@@ -132,7 +132,7 @@ public class EmailService implements EmailSender {
 
             LOGGER.info("Email has been successfully sent");
             //Return the token
-            return ResponseEntity.ok(new Response("Email with token successfully sent", token.toString()));
+            return ResponseEntity.ok(new Response("Email with token successfully sent", token));
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
@@ -173,7 +173,7 @@ public class EmailService implements EmailSender {
         }
 
         LOGGER.info("Token successfully confirmed");
-        return ResponseEntity.ok(new Response("Token successfully confirmed"));
+        return ResponseEntity.ok(new Response("Token successfully confirmed", confirmationToken.getEmail()));
     }
 
     @Transactional // Integration function start: Auth
