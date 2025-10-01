@@ -276,6 +276,46 @@
 				}
 			},
 			"response": []
-		}
+		},
+        {
+          "name": "Reset user password",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:6005/api/email/reset-user-password?token=fc18594a-a9be-47b9-9754-eb048a32c48e&newPassword=newPassword123",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "6005",
+              "path": [
+                "api",
+                "email",
+                "reset-user-password"
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "fc18594a-a9be-47b9-9754-eb048a32c48e"
+                },
+                {
+                  "key": "newPassword",
+                  "value": "newPassword123"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
 	]
 }
