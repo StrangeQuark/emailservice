@@ -221,6 +221,11 @@ public class EmailService implements EmailSender {
     @Transactional
     public ResponseEntity<?> resetUserPassword(UUID token, String newPassword) {
         LOGGER.info("Attempting to confirm token and reset user password");
+        // Integration function start: Auth
+        if(!jwtUtility.validateToken()) {
+            LOGGER.error("Invalid JWT token");
+            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+        }// Integration function end: Auth
 
         ConfirmationToken confirmationToken;
 
