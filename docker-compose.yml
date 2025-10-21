@@ -53,6 +53,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
   maildev:
     image: 'maildev/maildev'
+    container_name: maildev
     networks:
       - shared-network
     ports:
