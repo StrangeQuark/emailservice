@@ -192,7 +192,7 @@ public class EmailService implements EmailSender {
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                 LOGGER.error("Token has expired when attempting to enable user");
-                return ResponseEntity.status(409).body(new Response("The token has expired"));
+                return ResponseEntity.status(409).body(new Response("The token has expired", confirmationToken.getEmail()));
             }
 
             //Call the AuthService to enable the User
