@@ -5,6 +5,7 @@ import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
 import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
+import com.strangequark.emailservice.utility.TelemetryUtility; // Integration line: Telemetry
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException;
 
 import java.time.LocalDateTime;
+import java.util.Map; // Integration line: Telemetry
 import java.util.UUID;
 
 @Service
@@ -35,9 +37,13 @@ public class EmailService implements EmailSender {
     // Integration function start: Auth
     @Autowired
     AuthUtility authUtility;
-
     @Autowired
-    JwtUtility jwtUtility;// Integration function end: Auth
+    JwtUtility jwtUtility;
+    // Integration function end: Auth
+    // Integration function start: Telemetry
+    @Autowired
+    TelemetryUtility telemetryUtility;
+    // Integration function end: Telemetry
 
     public EmailService(JavaMailSender javaMailSender, ConfirmationTokenRepository confirmationTokenRepository, EmailValidator emailValidator) {
         this.javaMailSender = javaMailSender;
@@ -75,6 +81,12 @@ public class EmailService implements EmailSender {
             mimeMessageHelper.setSubject(subject);
             mimeMessageHelper.setFrom(sender);
             javaMailSender.send(mimeMessage);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("email-send", true, Map.of(
+                "email-sender", sender,
+                "email-recipient", recipient,
+                "email-subject", subject
+            )); // Integration function end: Telemetry
 
             LOGGER.info("Email successfully sent");
             return ResponseEntity.ok(new Response("Your email has been sent"));
@@ -171,7 +183,7 @@ public class EmailService implements EmailSender {
                     new Response("Token not found")
             );
         }
-
+        telemetryUtility.sendTelemetryEvent("email-confirm-token", false, null); // Integration line: Telemetry
         LOGGER.info("Token successfully confirmed");
         return ResponseEntity.ok(new Response("Token successfully confirmed", confirmationToken.getEmail()));
     }

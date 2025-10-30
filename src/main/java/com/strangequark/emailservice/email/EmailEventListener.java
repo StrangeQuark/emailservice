@@ -1,10 +1,12 @@
 package com.strangequark.emailservice.email;
 
+import com.strangequark.emailservice.utility.TelemetryUtility; // Integration line: Telemetry
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header; // Integration line: Auth
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired; // Integration line: Telemetry
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -25,6 +27,10 @@ public class EmailEventListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailEventListener.class);
 
     private final EmailService emailService;
+    // Integration function start: Telemetry
+    @Autowired
+    TelemetryUtility telemetryUtility;
+    // Integration function end: Telemetry
 
     public EmailEventListener(EmailService emailService) {
         this.emailService = emailService;
@@ -56,6 +62,7 @@ public class EmailEventListener {
         LOGGER.info("General email event received");
         EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
+        telemetryUtility.sendTelemetryEvent("email-event-general", true, null); // Integration line: Telemetry
 
         emailService.send(emailRequest.getRecipient(), emailRequest.getSender(), emailRequest.getEmail(), emailRequest.getSubject());
     }
@@ -65,6 +72,7 @@ public class EmailEventListener {
         LOGGER.info("Token email event received");
         EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
+        telemetryUtility.sendTelemetryEvent("email-event-token", true, null); // Integration line: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, false, false);
     }
@@ -74,6 +82,7 @@ public class EmailEventListener {
         LOGGER.info("Register email event received");
         EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
+        telemetryUtility.sendTelemetryEvent("email-event-register", true, null); // Integration line: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, true, false);
     }
@@ -83,6 +92,7 @@ public class EmailEventListener {
         LOGGER.info("Password reset email event received");
         EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
+        telemetryUtility.sendTelemetryEvent("email-event-password-reset", true, null); // Integration line: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, false, true);
     }

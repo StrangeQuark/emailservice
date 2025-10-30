@@ -2,6 +2,7 @@
 
 package com.strangequark.emailservice.utility;
 
+import io.jsonwebtoken.Claims; // Integration line: Telemetry
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -14,6 +15,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.security.Key;
+import java.util.UUID; // Integration line: Telemetry
 
 @Service
 public class JwtUtility {
@@ -41,6 +43,26 @@ public class JwtUtility {
             return false;
         }
     }
+    // Integration function start: Telemetry
+    public UUID extractUserIdFromToken() {
+        LOGGER.info("Attempting to extract user ID from JWT token");
+
+        try {
+            String token = getTokenFromHeader();
+            Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
+
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            return claims.get("id", UUID.class);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return null;
+        }
+    } // Integration function end: Telemetry
 
     private String getTokenFromHeader() {
         LOGGER.info("Attempting to get token from header");
