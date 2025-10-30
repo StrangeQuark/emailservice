@@ -59,9 +59,9 @@ services:
     ports:
       - "1080:1080"
       - "1025:1025"
-  zookeeper:
+  email-zookeeper:
     image: 'confluentinc/cp-zookeeper:7.6.0'
-    container_name: zookeeper
+    container_name: email-zookeeper
     environment:
       - ZOOKEEPER_CLIENT_PORT=${ZOOKEEPER_CLIENT_PORT}
       - ZOOKEEPER_TICK_TIME=${ZOOKEEPER_TICK_TIME}
@@ -73,7 +73,7 @@ services:
     image: 'confluentinc/cp-kafka:7.6.0'
     container_name: email-kafka
     depends_on:
-      - zookeeper
+      - email-zookeeper
     networks:
       - shared-network
     ports:
