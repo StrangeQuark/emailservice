@@ -23,9 +23,11 @@ public class TelemetryUtility {
     @Autowired
     private JwtUtility jwtUtility; // Integration function end: Auth
 
-    public void sendTelemetryEvent(String eventType, boolean includeUserId, Map<String, Object> metadata) {
+    public void sendTelemetryEvent(String eventType,
+                                   boolean includeUserId, // Integration line: Auth
+                                   Map<String, Object> metadata) {
         try {
-            LOGGER.info("Attempting to post message to auth telemetry Kafka topic");
+            LOGGER.info("Attempting to post message to email telemetry Kafka topic");
             // Integration function start: Auth
             String accessToken = authUtility.authenticateServiceAccount();
             accessToken = "Bearer " + accessToken;
