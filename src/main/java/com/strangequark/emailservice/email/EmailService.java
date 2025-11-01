@@ -82,11 +82,14 @@ public class EmailService implements EmailSender {
             mimeMessageHelper.setFrom(sender);
             javaMailSender.send(mimeMessage);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("email-send", true, Map.of(
-                "email-sender", sender,
-                "email-recipient", recipient,
-                "email-subject", subject
-            )); // Integration function end: Telemetry
+            telemetryUtility.sendTelemetryEvent("email-send",
+                    true, // Integration line: Auth
+                    Map.of(
+                    "email-sender", sender,
+                    "email-recipient", recipient,
+                    "email-subject", subject
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("Email successfully sent");
             return ResponseEntity.ok(new Response("Your email has been sent"));
@@ -183,7 +186,11 @@ public class EmailService implements EmailSender {
                     new Response("Token not found")
             );
         }
-        telemetryUtility.sendTelemetryEvent("email-confirm-token", false, null); // Integration line: Telemetry
+        telemetryUtility.sendTelemetryEvent("email-confirm-token", // Integration function start: Telemetry
+                false, // Integration line: Auth
+                null
+        ); // Integration function end: Telemetry
+
         LOGGER.info("Token successfully confirmed");
         return ResponseEntity.ok(new Response("Token successfully confirmed", confirmationToken.getEmail()));
     }
