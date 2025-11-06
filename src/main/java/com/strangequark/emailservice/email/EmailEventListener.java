@@ -21,6 +21,7 @@ import org.springframework.web.context.request.ServletRequestAttributes; // Inte
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailEventListener {
@@ -64,7 +65,7 @@ public class EmailEventListener {
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
         telemetryUtility.sendTelemetryEvent("email-event-general", // Integration function start: Telemetry
                 true, // Integration line: Auth
-                null
+                Map.of()
         ); // Integration function end: Telemetry
 
         emailService.send(emailRequest.getRecipient(), emailRequest.getSender(), emailRequest.getEmail(), emailRequest.getSubject());
@@ -77,7 +78,7 @@ public class EmailEventListener {
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
         telemetryUtility.sendTelemetryEvent("email-event-token", // Integration function start: Telemetry
                 true, // Integration line: Auth
-                null
+                Map.of()
         ); // Integration function end: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, false, false);
@@ -90,7 +91,7 @@ public class EmailEventListener {
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
         telemetryUtility.sendTelemetryEvent("email-event-register", // Integration function start: Telemetry
                 true, // Integration line: Auth
-                null
+                Map.of()
         ); // Integration function end: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, true, false);
@@ -103,7 +104,7 @@ public class EmailEventListener {
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
         telemetryUtility.sendTelemetryEvent("email-event-password-reset", // Integration function start: Telemetry
                 true, // Integration line: Auth
-                null
+                Map.of()
         ); // Integration function end: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, false, true);
