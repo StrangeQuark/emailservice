@@ -85,9 +85,8 @@ public class EmailService implements EmailSender {
             telemetryUtility.sendTelemetryEvent("email-send",
                     true, // Integration line: Auth
                     Map.of(
-                    "email-sender", sender,
-                    "email-recipient", recipient,
-                    "email-subject", subject
+                    "sender-domain", sender.substring(sender.indexOf("@") + 1),
+                    "recipient-domain", recipient.substring(recipient.indexOf("@") + 1)
                     )
             ); // Integration function end: Telemetry
 
@@ -188,7 +187,7 @@ public class EmailService implements EmailSender {
         }
         telemetryUtility.sendTelemetryEvent("email-confirm-token", // Integration function start: Telemetry
                 false, // Integration line: Auth
-                null
+                Map.of()
         ); // Integration function end: Telemetry
 
         LOGGER.info("Token successfully confirmed");
@@ -225,6 +224,10 @@ public class EmailService implements EmailSender {
             }
 
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
+            telemetryUtility.sendTelemetryEvent("email-enable-user", // Integration function start: Telemetry
+                    false, // Integration line: Auth
+                    Map.of()
+            ); // Integration function end: Telemetry
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
@@ -266,6 +269,10 @@ public class EmailService implements EmailSender {
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
 
             authUtility.resetPassword(confirmationToken.getEmail(), newPassword);
+            telemetryUtility.sendTelemetryEvent("email-reset-password", // Integration function start: Telemetry
+                    false, // Integration line: Auth
+                    Map.of()
+            ); // Integration function end: Telemetry
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(404).body(new Response(ex.getMessage()));
