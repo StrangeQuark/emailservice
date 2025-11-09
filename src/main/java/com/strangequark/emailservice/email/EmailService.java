@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.ResourceAccessException; // Integration line: Auth
 
 import java.time.LocalDateTime;
 import java.util.Map; // Integration line: Telemetry
@@ -225,7 +225,7 @@ public class EmailService implements EmailSender {
 
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
             telemetryUtility.sendTelemetryEvent("email-enable-user", // Integration function start: Telemetry
-                    false, // Integration line: Auth
+                    false,
                     Map.of()
             ); // Integration function end: Telemetry
         } catch (Exception ex) {

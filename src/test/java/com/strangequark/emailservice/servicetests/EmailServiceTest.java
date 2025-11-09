@@ -2,7 +2,7 @@ package com.strangequark.emailservice.servicetests;
 
 import com.strangequark.emailservice.email.EmailRequest;
 import com.strangequark.emailservice.email.EmailService;
-import com.strangequark.emailservice.response.Response;
+import com.strangequark.emailservice.response.Response; // Integration line: Auth
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 
-import java.util.UUID;
+import java.util.UUID; // Integration line: Auth
 
 public class EmailServiceTest extends BaseServiceTest {
     @Autowired
