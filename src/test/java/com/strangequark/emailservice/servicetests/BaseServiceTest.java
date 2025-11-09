@@ -14,7 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.when; // Integration line: Auth
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -39,7 +39,6 @@ public abstract class BaseServiceTest {
     @BeforeEach
     void setup() {
         when(jwtUtility.validateToken()).thenReturn(true); // Integration line: Auth
-
         token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(15), "test@test.com");
