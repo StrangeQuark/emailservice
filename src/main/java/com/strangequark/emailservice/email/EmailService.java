@@ -82,13 +82,17 @@ public class EmailService implements EmailSender {
             mimeMessageHelper.setFrom(sender);
             javaMailSender.send(mimeMessage);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("email-send",
-                    true, // Integration line: Auth
-                    Map.of(
-                    "sender-domain", sender.substring(sender.indexOf("@") + 1),
-                    "recipient-domain", recipient.substring(recipient.indexOf("@") + 1)
-                    )
-            ); // Integration function end: Telemetry
+            try {
+                telemetryUtility.sendTelemetryEvent("email-send",
+                        Map.of(
+                                "userId", jwtUtility.extractId(), // Integration line: Auth
+                                "sender-domain", sender.substring(sender.indexOf("@") + 1),
+                                "recipient-domain", recipient.substring(recipient.indexOf("@") + 1)
+                        )
+                );
+            } catch (Exception ex) {
+                LOGGER.warn("Error sending telemetry event during email send: " + ex.getMessage());
+            }// Integration function end: Telemetry
 
             LOGGER.info("Email successfully sent");
             return ResponseEntity.ok(new Response("Your email has been sent"));
@@ -185,11 +189,8 @@ public class EmailService implements EmailSender {
                     new Response("Token not found")
             );
         }
-        telemetryUtility.sendTelemetryEvent("email-confirm-token", // Integration function start: Telemetry
-                false, // Integration line: Auth
-                Map.of()
-        ); // Integration function end: Telemetry
 
+        telemetryUtility.sendTelemetryEvent("email-confirm-token", Map.of()); // Integration line: Telemetry
         LOGGER.info("Token successfully confirmed");
         return ResponseEntity.ok(new Response("Token successfully confirmed", confirmationToken.getEmail()));
     }
@@ -224,10 +225,6 @@ public class EmailService implements EmailSender {
             }
 
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
-            telemetryUtility.sendTelemetryEvent("email-enable-user", // Integration function start: Telemetry
-                    false,
-                    Map.of()
-            ); // Integration function end: Telemetry
         } catch (Exception ex) {
             LOGGER.error(ex.toString());
             LOGGER.error(ex.getMessage());
@@ -236,6 +233,7 @@ public class EmailService implements EmailSender {
             );
         }
 
+        telemetryUtility.sendTelemetryEvent("email-enable-user", Map.of()); // Integration line: Telemetry
         LOGGER.info("Account verified, user enabled");
         return ResponseEntity.ok(new Response("Account verified, user enabled"));
     }
@@ -269,10 +267,7 @@ public class EmailService implements EmailSender {
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
 
             authUtility.resetPassword(confirmationToken.getEmail(), newPassword);
-            telemetryUtility.sendTelemetryEvent("email-reset-password", // Integration function start: Telemetry
-                    false, // Integration line: Auth
-                    Map.of()
-            ); // Integration function end: Telemetry
+            telemetryUtility.sendTelemetryEvent("email-reset-password", Map.of()); // Integration line: Telemetry
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(404).body(new Response(ex.getMessage()));

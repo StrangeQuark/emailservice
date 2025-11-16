@@ -1,5 +1,6 @@
 package com.strangequark.emailservice.email;
 
+import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
 import com.strangequark.emailservice.utility.TelemetryUtility; // Integration line: Telemetry
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -32,6 +33,10 @@ public class EmailEventListener {
     @Autowired
     TelemetryUtility telemetryUtility;
     // Integration function end: Telemetry
+    // Integration function start: Auth
+    @Autowired
+    JwtUtility jwtUtility;
+    // Integration function end: Auth
 
     public EmailEventListener(EmailService emailService) {
         this.emailService = emailService;
@@ -63,9 +68,10 @@ public class EmailEventListener {
         LOGGER.info("General email event received");
         EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
-        telemetryUtility.sendTelemetryEvent("email-event-general", // Integration function start: Telemetry
-                true, // Integration line: Auth
-                Map.of()
+        // Integration function start: Telemetry
+        telemetryUtility.sendTelemetryEvent("email-event-general", Map.of(
+                    "userId", jwtUtility.extractId() // Integration line: Auth
+                )
         ); // Integration function end: Telemetry
 
         emailService.send(emailRequest.getRecipient(), emailRequest.getSender(), emailRequest.getEmail(), emailRequest.getSubject());
@@ -76,9 +82,10 @@ public class EmailEventListener {
         LOGGER.info("Token email event received");
         EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
-        telemetryUtility.sendTelemetryEvent("email-event-token", // Integration function start: Telemetry
-                true, // Integration line: Auth
-                Map.of()
+        // Integration function start: Telemetry
+        telemetryUtility.sendTelemetryEvent("email-event-token", Map.of(
+                        "userId", jwtUtility.extractId() // Integration line: Auth
+                )
         ); // Integration function end: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, false, false);
@@ -89,9 +96,10 @@ public class EmailEventListener {
         LOGGER.info("Register email event received");
         EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
-        telemetryUtility.sendTelemetryEvent("email-event-register", // Integration function start: Telemetry
-                true, // Integration line: Auth
-                Map.of()
+        // Integration function start: Telemetry
+        telemetryUtility.sendTelemetryEvent("email-event-register", Map.of(
+                        "userId", jwtUtility.extractId() // Integration line: Auth
+                )
         ); // Integration function end: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, true, false);
@@ -102,9 +110,10 @@ public class EmailEventListener {
         LOGGER.info("Password reset email event received");
         EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
-        telemetryUtility.sendTelemetryEvent("email-event-password-reset", // Integration function start: Telemetry
-                true, // Integration line: Auth
-                Map.of()
+        // Integration function start: Telemetry
+        telemetryUtility.sendTelemetryEvent("email-event-password-reset", Map.of(
+                        "userId", jwtUtility.extractId() // Integration line: Auth
+                )
         ); // Integration function end: Telemetry
 
         emailService.sendEmailWithToken(emailRequest, false, true);
