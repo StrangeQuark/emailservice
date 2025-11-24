@@ -26,7 +26,7 @@ public class AuthUtility {
 
     public String authenticateServiceAccount() {
         try {
-            LOGGER.info("Attempting to authenticate service account");
+            LOGGER.debug("Attempting to authenticate service account");
 
             Map<String, String> requestBody = new HashMap<>();
             requestBody.put("clientId", "email");
@@ -49,16 +49,17 @@ public class AuthUtility {
             if(!response.contains("jwtToken"))
                 throw new RuntimeException("jwtToken not found in authentication response");
 
-            LOGGER.info("Service account authentication success");
+            LOGGER.debug("Service account authentication success");
             return response.substring(response.indexOf("jwtToken:") + 9).trim();
         } catch (RestClientException ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to authenticate service account: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return null;
         }
     }
 
     public void enableUser(String email) {
-        LOGGER.info("Attempting to enable user");
+        LOGGER.debug("Attempting to enable user");
 
         try {
             String accessToken = authenticateServiceAccount();
@@ -79,12 +80,13 @@ public class AuthUtility {
 
             new RestTemplate().postForObject(url, requestEntity, String.class);
         } catch (JSONException ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to enable user in auth utility: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
         }
     }
 
     public void resetPassword(String email, String newPassword) {
-        LOGGER.info("Attempting to reset user password");
+        LOGGER.debug("Attempting to reset user password");
 
         try {
             String accessToken = authenticateServiceAccount();
@@ -106,7 +108,8 @@ public class AuthUtility {
 
             new RestTemplate().postForObject(url, requestEntity, String.class);
         } catch (JSONException ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to reset user password in auth utility: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
         }
     }
 }

@@ -28,7 +28,7 @@ public class TelemetryUtility {
 
     public void sendTelemetryEvent(String eventType, Map<String, Object> metadata) {
         try {
-            LOGGER.info("Attempting to post message to email telemetry Kafka topic");
+            LOGGER.debug("Attempting to post message to email telemetry Kafka topic");
             // Integration function start: Auth
             if (!jwtUtility.isTokenValid(cachedServiceToken)) {
                 cachedServiceToken = authUtility.authenticateServiceAccount();
@@ -42,7 +42,7 @@ public class TelemetryUtility {
             requestBody.put("timestamp", LocalDateTime.now());
             requestBody.put("metadata", new JSONObject(new HashMap<>(metadata)));
 
-            LOGGER.info("Message created, attempting to post to email telemetry Kafka topic");
+            LOGGER.debug("Message created, attempting to post to email telemetry Kafka topic");
             ProducerRecord<String, String> record = new ProducerRecord<String, String>(
                     "email-telemetry-events",
                     null,
@@ -52,9 +52,10 @@ public class TelemetryUtility {
             );
 
             getProducer().send(record);
-            LOGGER.info("Telemetry event successfully sent");
+            LOGGER.debug("Telemetry event successfully sent");
         } catch (Exception ex) {
-            LOGGER.error("Unable to reach telemetry Kafka service: " + ex.getMessage());
+            LOGGER.error("Failed to send telemetry event: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
         }
     }
 
