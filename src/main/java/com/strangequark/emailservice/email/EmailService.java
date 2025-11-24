@@ -91,20 +91,21 @@ public class EmailService implements EmailSender {
                         )
                 );
             } catch (Exception ex) {
-                LOGGER.warn("Error sending telemetry event during email send: " + ex.getMessage());
+                LOGGER.error("Failed to send telemetry event during email send: " + ex.getMessage());
+                LOGGER.debug("Stack trace: ", ex);
             }// Integration function end: Telemetry
 
             LOGGER.info("Email successfully sent");
             return ResponseEntity.ok(new Response("Your email has been sent"));
         } catch(MessagingException ex) {
-            LOGGER.error("Failed to send email: ");
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to send email: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(
-                    new Response("There was an response in sending the email, please contact the system administrator")
+                    new Response("There was an error when sending email, please contact the system administrator")
             );
         } catch(IllegalArgumentException ex) {
-            LOGGER.error("Failed to send email: " + ex);
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Illegal argument when sending email: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(
                     new Response(ex.getMessage())
             );
@@ -148,14 +149,14 @@ public class EmailService implements EmailSender {
             //Save the confirmation token to the database
             confirmationTokenRepository.save(confirmationToken);
 
-            LOGGER.info("Email has been successfully sent");
+            LOGGER.info("Token email has been successfully sent");
             //Return the token
             return ResponseEntity.ok(new Response("Email with token successfully sent", token));
         } catch (Exception ex) {
-            LOGGER.error(ex.toString());
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to send email with token: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(
-              new Response("There was an response in the request, please contact the system administrator")
+              new Response("There was an error sending token email, please contact the system administrator")
             );
         }
     }
@@ -183,8 +184,8 @@ public class EmailService implements EmailSender {
 
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
         } catch (Exception ex) {
-            LOGGER.error(ex.toString());
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to confirm token: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(404).body(
                     new Response("Token not found")
             );
@@ -215,7 +216,7 @@ public class EmailService implements EmailSender {
             }
 
             //Call the AuthService to enable the User
-            LOGGER.info("Attempting to send enableUser call to Auth service");
+            LOGGER.debug("Attempting to send enableUser call to Auth service");
             try {
                 authUtility.enableUser(confirmationToken.getEmail());
             } catch (ResourceAccessException resourceAccessException) {
@@ -226,8 +227,8 @@ public class EmailService implements EmailSender {
 
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
         } catch (Exception ex) {
-            LOGGER.error(ex.toString());
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to enable user: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(404).body(
                     new Response("Token not found")
             );
@@ -269,7 +270,8 @@ public class EmailService implements EmailSender {
             authUtility.resetPassword(confirmationToken.getEmail(), newPassword);
             telemetryUtility.sendTelemetryEvent("email-reset-password", Map.of()); // Integration line: Telemetry
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to reset user password: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(404).body(new Response(ex.getMessage()));
         }
 

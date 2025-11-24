@@ -24,7 +24,7 @@ public class JwtUtility {
     private String SECRET_KEY;
 
     public boolean validateToken() {
-        LOGGER.info("Attempting to validate JWT");
+        LOGGER.debug("Attempting to validate JWT");
 
         try {
             String token = getTokenFromHeader();
@@ -35,16 +35,17 @@ public class JwtUtility {
                     .build()
                     .parseClaimsJws(token);
 
-            LOGGER.info("JWT is valid");
+            LOGGER.debug("JWT is valid");
             return true;
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to validate token: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return false;
         }
     }
 
     private String getTokenFromHeader() {
-        LOGGER.info("Attempting to get token from header");
+        LOGGER.debug("Attempting to get token from header");
         try {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs == null) {
@@ -58,16 +59,17 @@ public class JwtUtility {
                 throw new RuntimeException("Missing or invalid Authorization header");
             }
 
-            LOGGER.info("Token successfully retrieved from header");
+            LOGGER.debug("Token successfully retrieved from header");
             return authHeader.substring(7); // Remove "Bearer "
         } catch (Exception ex) {
-            LOGGER.info(ex.getMessage());
+            LOGGER.error("Failed to get token from header: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return null;
         }
     }
     // Integration function start: Telemetry
     public String extractId() {
-        LOGGER.info("Attempting to extract subject from JWT");
+        LOGGER.debug("Attempting to extract subject from JWT");
 
         String token = getTokenFromHeader();
         Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
@@ -78,7 +80,7 @@ public class JwtUtility {
                 .parseClaimsJws(token)
                 .getBody();
 
-        LOGGER.info("Subject successfully extracted from JWT");
+        LOGGER.debug("Subject successfully extracted from JWT");
         return claims.getId();
     }
 
