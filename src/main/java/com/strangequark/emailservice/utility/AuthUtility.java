@@ -2,6 +2,9 @@
 
 package com.strangequark.emailservice.utility;
 
+import com.strangequark.emailservice.email.EmailRequest;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.header.Header;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -10,9 +13,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -111,5 +117,18 @@ public class AuthUtility {
             LOGGER.error("Failed to reset user password in auth utility: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
         }
+    }
+
+    public void setServiceAccountJwtToAuthHeader() {
+        LOGGER.info("Setting authorization header from service account JWT");
+
+        // Create a mock request with Authorization header
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("Authorization", authenticateServiceAccount());
+
+        // Bind the mock request to the current thread
+        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
+        RequestContextHolder.setRequestAttributes(attrs);
+        LOGGER.info("Service account auth header set");
     }
 }
