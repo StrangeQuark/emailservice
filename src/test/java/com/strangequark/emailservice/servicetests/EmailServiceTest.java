@@ -36,7 +36,7 @@ public class EmailServiceTest extends BaseServiceTest {
     @Test
     void sendEmailWithTokenTest() {
         EmailRequest emailRequest = new EmailRequest("recipient@test.com", "sender@test.com",
-                "Email body", "Email subject");
+                "Email body", "Email subject", true);
 
         ResponseEntity<?> response =  emailService.sendEmailWithToken(emailRequest, false, false);
 
