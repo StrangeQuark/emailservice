@@ -56,12 +56,6 @@ public class EmailService implements EmailSender {
     public ResponseEntity<?> send(String recipient, String sender, String email, String subject) {
         LOGGER.info("Attempting to send an email");
 
-        // Integration function start: Auth
-        if(!jwtUtility.validateToken()) {
-            LOGGER.error("Invalid JWT token");
-            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
-        }
-        // Integration function end: Auth
         if(!emailValidator.test(recipient)) {
             LOGGER.error("Invalid recipient email address");
             return ResponseEntity.status(400).body(new Response("Invalid recipient email address"));
@@ -108,6 +102,44 @@ public class EmailService implements EmailSender {
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(
                     new Response(ex.getMessage())
+            );
+        }
+    }
+
+    public ResponseEntity<?> sendEmail(EmailRequest request, boolean requireJwt) {
+        // Integration function start: Auth
+        if(requireJwt && !jwtUtility.validateToken()) {
+            LOGGER.error("Invalid JWT token");
+            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+        }
+        // Integration function end: Auth
+
+        try {
+            //Create an email confirmation token
+            UUID token = UUID.randomUUID();
+            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
+
+            //Send the email
+            ResponseEntity<?> response = send(request.getRecipient(),
+                    request.getSender(),
+                    request.getEmail(),
+                    request.getSubject());
+            if(response.getStatusCode().value() != 200) {
+                LOGGER.error(response.toString());
+                return response;
+            }
+
+            if(request.getIncludeToken())
+                confirmationTokenRepository.save(confirmationToken);
+
+            LOGGER.info("Email has been successfully sent");
+            //Return the token
+            return ResponseEntity.ok(new Response("Email with token successfully sent", token));
+        } catch (Exception ex) {
+            LOGGER.error("Failed to send email with token: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(
+                    new Response("There was an error sending token email, please contact the system administrator")
             );
         }
     }
@@ -212,7 +244,7 @@ public class EmailService implements EmailSender {
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                 LOGGER.error("Token has expired when attempting to enable user - resending email");
-                sendEmailWithToken(new EmailRequest(confirmationToken.getEmail(), "donotreply@emailservice.com", null, "Account confirmation"), true, false);
+                sendEmail(new EmailRequest(confirmationToken.getEmail(), "donotreply@emailservice.com", null, "Account confirmation", true), false);
                 return ResponseEntity.status(409).body(new Response("The token has expired - A new confirmation email has been sent"));
             }
 

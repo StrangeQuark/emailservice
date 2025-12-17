@@ -5,16 +5,18 @@ public class EmailRequest {
     private String sender;
     private String email;
     private String subject;
+    private boolean includeToken;
 
     public EmailRequest() {
 
     }
 
-    public EmailRequest(String recipient, String sender, String email, String subject) {
+    public EmailRequest(String recipient, String sender, String email, String subject, boolean includeToken) {
         this.recipient = recipient;
         this.sender = sender;
         this.email = email;
         this.subject = subject;
+        this.includeToken = includeToken;
     }
 
     public String getRecipient() {
@@ -47,5 +49,13 @@ public class EmailRequest {
 
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    public boolean getIncludeToken() {
+        return includeToken;
+    }
+
+    public void setIncludeToken(boolean includeToken) {
+        this.includeToken = includeToken;
     }
 }
