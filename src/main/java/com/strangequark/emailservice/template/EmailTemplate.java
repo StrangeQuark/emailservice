@@ -21,7 +21,7 @@ public class EmailTemplate {
     @Convert(converter = StringEncryptDecryptConverter.class)
     private String subject;
 
-    @Column(nullable=false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     @Convert(converter = StringEncryptDecryptConverter.class)
     private String body;
 
