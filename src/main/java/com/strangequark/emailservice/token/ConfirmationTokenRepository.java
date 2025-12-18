@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface ConfirmationTokenRepository extends JpaRepository<ConfirmationToken, Long> {
+public interface ConfirmationTokenRepository extends JpaRepository<ConfirmationToken, UUID> {
 
     @Query("SELECT t FROM ConfirmationToken t WHERE t.token = ?1")
     Optional<ConfirmationToken> findByToken(UUID token);
