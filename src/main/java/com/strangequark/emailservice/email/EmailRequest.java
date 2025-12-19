@@ -1,5 +1,7 @@
 package com.strangequark.emailservice.email;
 
+import java.util.Map;
+
 public class EmailRequest {
     private String recipient;
     private String sender;
@@ -7,6 +9,7 @@ public class EmailRequest {
     private String subject;
     private boolean includeToken;
     private String emailTemplateName;
+    private Map<String, String> templateVariables;
 
     public EmailRequest() {
 
@@ -20,11 +23,12 @@ public class EmailRequest {
         this.includeToken = includeToken;
     }
 
-    public EmailRequest(String recipient, String sender, boolean includeToken, String emailTemplateName) {
+    public EmailRequest(String recipient, String sender, boolean includeToken, String emailTemplateName, Map<String, String> templateVariables) {
         this.recipient = recipient;
         this.sender = sender;
         this.includeToken = includeToken;
         this.emailTemplateName = emailTemplateName;
+        this.templateVariables = templateVariables;
     }
 
     public String getRecipient() {
@@ -73,5 +77,13 @@ public class EmailRequest {
 
     public void setEmailTemplateName(String emailTemplateName) {
         this.emailTemplateName = emailTemplateName;
+    }
+
+    public Map<String, String> getTemplateVariables() {
+        return templateVariables;
+    }
+
+    public void setTemplateVariables(Map<String, String> templateVariables) {
+        this.templateVariables = templateVariables;
     }
 }

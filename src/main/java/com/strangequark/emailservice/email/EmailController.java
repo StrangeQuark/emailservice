@@ -20,6 +20,11 @@ public class EmailController {
         return emailService.sendEmail(request, true);
     }
 
+    @PostMapping(path = "/send-template-email")
+    public ResponseEntity<?> sendTemplateEmail(@RequestBody EmailRequest request) {
+        return emailService.sendTemplateEmail(request, true);
+    }
+
     @PostMapping(path = "/send-email-with-token")
     public ResponseEntity<?> sendEmailWithToken(@RequestBody EmailRequest request) {
         return emailService.sendEmailWithToken(request, false, false);
