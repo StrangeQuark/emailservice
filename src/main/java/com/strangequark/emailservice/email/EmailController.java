@@ -17,7 +17,7 @@ public class EmailController {
 
     @PostMapping(path = "/send-email")
     public ResponseEntity<?> sendEmail(@RequestBody EmailRequest request) {
-        return emailService.send(request.getRecipient(), request.getSender(), request.getEmail(), request.getSubject());
+        return emailService.sendEmail(request, true);
     }
 
     @PostMapping(path = "/send-email-with-token")

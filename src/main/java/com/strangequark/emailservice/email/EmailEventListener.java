@@ -74,7 +74,7 @@ public class EmailEventListener {
                 )
         ); // Integration function end: Telemetry
 
-        emailService.send(emailRequest.getRecipient(), emailRequest.getSender(), emailRequest.getEmail(), emailRequest.getSubject());
+        emailService.send(emailRequest.getRecipient(), emailRequest.getSender(), emailRequest.getBody(), emailRequest.getSubject());
     }
 
     @KafkaListener(topics = "token-email-events", groupId = "email-group")

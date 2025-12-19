@@ -1,6 +1,8 @@
 package com.strangequark.emailservice.email;
 
 import com.strangequark.emailservice.response.Response;
+import com.strangequark.emailservice.template.EmailTemplate;
+import com.strangequark.emailservice.template.EmailTemplateRepository;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
@@ -34,6 +36,7 @@ public class EmailService implements EmailSender {
     private final JavaMailSender javaMailSender;
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailValidator emailValidator;
+    private final EmailTemplateRepository emailTemplateRepository;
     // Integration function start: Auth
     @Autowired
     AuthUtility authUtility;
@@ -45,15 +48,17 @@ public class EmailService implements EmailSender {
     TelemetryUtility telemetryUtility;
     // Integration function end: Telemetry
 
-    public EmailService(JavaMailSender javaMailSender, ConfirmationTokenRepository confirmationTokenRepository, EmailValidator emailValidator) {
+    public EmailService(JavaMailSender javaMailSender, ConfirmationTokenRepository confirmationTokenRepository,
+                        EmailValidator emailValidator, EmailTemplateRepository emailTemplateRepository) {
         this.javaMailSender = javaMailSender;
         this.confirmationTokenRepository = confirmationTokenRepository;
         this.emailValidator = emailValidator;
+        this.emailTemplateRepository = emailTemplateRepository;
     }
 
     @Override
     @Async
-    public ResponseEntity<?> send(String recipient, String sender, String email, String subject) {
+    public ResponseEntity<?> send(String recipient, String sender, String body, String subject) {
         LOGGER.info("Attempting to send an email");
 
         if(!emailValidator.test(recipient)) {
@@ -70,7 +75,7 @@ public class EmailService implements EmailSender {
 
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, "utf-8");
 
-            mimeMessageHelper.setText(email, true);
+            mimeMessageHelper.setText(body, true);
             mimeMessageHelper.setTo(recipient);
             mimeMessageHelper.setSubject(subject);
             mimeMessageHelper.setFrom(sender);
@@ -115,6 +120,16 @@ public class EmailService implements EmailSender {
         // Integration function end: Auth
 
         try {
+            //Check for templates
+            if(request.getEmailTemplateName() != null) {
+                LOGGER.info("Setting email values from template");
+                EmailTemplate template = emailTemplateRepository.findByName(request.getEmailTemplateName())
+                        .orElseThrow(() -> new RuntimeException("Template was not found"));
+
+                request.setSubject(template.getSubject());
+                request.setBody(template.getBody());
+            }
+
             //Create an email confirmation token
             UUID token = UUID.randomUUID();
             ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
@@ -122,24 +137,25 @@ public class EmailService implements EmailSender {
             //Send the email
             ResponseEntity<?> response = send(request.getRecipient(),
                     request.getSender(),
-                    request.getEmail(),
+                    request.getBody(),
                     request.getSubject());
             if(response.getStatusCode().value() != 200) {
                 LOGGER.error(response.toString());
                 return response;
             }
 
-            if(request.getIncludeToken())
-                confirmationTokenRepository.save(confirmationToken);
-
             LOGGER.info("Email has been successfully sent");
-            //Return the token
-            return ResponseEntity.ok(new Response("Email with token successfully sent", token));
+
+            if(request.getIncludeToken()) {
+                confirmationTokenRepository.save(confirmationToken);
+                return ResponseEntity.ok(new Response("Email successfully sent", token));
+            }
+            return ResponseEntity.ok(new Response("Email successfully sent"));
         } catch (Exception ex) {
-            LOGGER.error("Failed to send email with token: " + ex.getMessage());
+            LOGGER.error("Failed to send email: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(
-                    new Response("There was an error sending token email, please contact the system administrator")
+                    new Response("There was an error sending the email, please contact the system administrator")
             );
         }
     }
@@ -171,7 +187,7 @@ public class EmailService implements EmailSender {
             ResponseEntity<?> response = send(request.getRecipient(),
                     request.getSender(),
                     isRegister ? buildUserSignupEmail("http://react-service/confirm-email?token=" + token) :
-                            isPasswordReset ? buildPasswordResetEmail("http://react-service/new-password?token=" + token) : request.getEmail(),
+                            isPasswordReset ? buildPasswordResetEmail("http://react-service/new-password?token=" + token) : request.getBody(),
                     request.getSubject());
             if(response.getStatusCode().value() != 200) {
                 LOGGER.error(response.toString());
@@ -244,7 +260,11 @@ public class EmailService implements EmailSender {
             //Check if the token has expired
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                 LOGGER.error("Token has expired when attempting to enable user - resending email");
-                sendEmail(new EmailRequest(confirmationToken.getEmail(), "donotreply@emailservice.com", null, "Account confirmation", true), false);
+
+                EmailRequest emailRequest = new EmailRequest(confirmationToken.getEmail(),
+                        "donotreply@emailservice.com", true, "USER_SIGNUP");
+                sendEmail(emailRequest, false);
+
                 return ResponseEntity.status(409).body(new Response("The token has expired - A new confirmation email has been sent"));
             }
 

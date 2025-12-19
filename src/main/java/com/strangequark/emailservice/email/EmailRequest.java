@@ -3,20 +3,28 @@ package com.strangequark.emailservice.email;
 public class EmailRequest {
     private String recipient;
     private String sender;
-    private String email;
+    private String body;
     private String subject;
     private boolean includeToken;
+    private String emailTemplateName;
 
     public EmailRequest() {
 
     }
 
-    public EmailRequest(String recipient, String sender, String email, String subject, boolean includeToken) {
+    public EmailRequest(String recipient, String sender, String body, String subject, boolean includeToken) {
         this.recipient = recipient;
         this.sender = sender;
-        this.email = email;
+        this.body = body;
         this.subject = subject;
         this.includeToken = includeToken;
+    }
+
+    public EmailRequest(String recipient, String sender, boolean includeToken, String emailTemplateName) {
+        this.recipient = recipient;
+        this.sender = sender;
+        this.includeToken = includeToken;
+        this.emailTemplateName = emailTemplateName;
     }
 
     public String getRecipient() {
@@ -35,12 +43,12 @@ public class EmailRequest {
         this.sender = sender;
     }
 
-    public String getEmail() {
-        return email;
+    public String getBody() {
+        return body;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setBody(String body) {
+        this.body = body;
     }
 
     public String getSubject() {
@@ -57,5 +65,13 @@ public class EmailRequest {
 
     public void setIncludeToken(boolean includeToken) {
         this.includeToken = includeToken;
+    }
+
+    public String getEmailTemplateName() {
+        return emailTemplateName;
+    }
+
+    public void setEmailTemplateName(String emailTemplateName) {
+        this.emailTemplateName = emailTemplateName;
     }
 }
