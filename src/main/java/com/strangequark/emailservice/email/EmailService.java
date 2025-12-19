@@ -25,8 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException; // Integration line: Auth
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Map; // Integration line: Telemetry
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @Configuration
@@ -37,6 +42,7 @@ public class EmailService implements EmailSender {
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailValidator emailValidator;
     private final EmailTemplateRepository emailTemplateRepository;
+    private static final Pattern VAR_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_]+)}}");
     // Integration function start: Auth
     @Autowired
     AuthUtility authUtility;
@@ -160,6 +166,84 @@ public class EmailService implements EmailSender {
         }
     }
 
+    public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt) {
+        // Integration function start: Auth
+        if(requireJwt && !jwtUtility.validateToken()) {
+            LOGGER.error("Invalid JWT token");
+            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+        }
+        // Integration function end: Auth
+
+        try {
+            LOGGER.info("Setting email values from template");
+            EmailTemplate template = emailTemplateRepository.findByName(request.getEmailTemplateName())
+                    .orElseThrow(() -> new RuntimeException("Template was not found"));
+
+            //Create an email confirmation token
+            UUID token = UUID.randomUUID();
+            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
+
+            //Send the email
+            ResponseEntity<?> response = send(request.getRecipient(),
+                    request.getSender(),
+                    renderTemplateVars(template.getBody(), request.getTemplateVariables()),
+                    template.getSubject());
+            if(response.getStatusCode().value() != 200) {
+                LOGGER.error(response.toString());
+                return response;
+            }
+
+            LOGGER.info("Template email has been successfully sent");
+            if(request.getIncludeToken()) {
+                confirmationTokenRepository.save(confirmationToken);
+                return ResponseEntity.ok(new Response("Template email successfully sent", token));
+            }
+            return ResponseEntity.ok(new Response("Template email successfully sent"));
+        } catch (Exception ex) {
+            LOGGER.error("Failed to send template email: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(
+                    new Response("There was an error sending the template email, please contact the system administrator")
+            );
+        }
+    }
+
+    private Set<String> extractVars(String template) {
+        Matcher matcher = VAR_PATTERN.matcher(template);
+        Set<String> vars = new HashSet<>();
+        while (matcher.find()) {
+            vars.add(matcher.group(1));
+        }
+        return vars;
+    }
+
+    private void validateVars(String template, Map<String, String> values) {
+        Set<String> required = extractVars(template);
+
+        Set<String> missing = required.stream()
+                .filter(v -> !values.containsKey(v))
+                .collect(Collectors.toSet());
+
+        if (!missing.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Missing template variables: " + missing
+            );
+        }
+    }
+
+    private String renderTemplateVars(String template, Map<String, String> vars) {
+        validateVars(template, vars);
+
+        String result = template;
+        for (var entry : vars.entrySet()) {
+            result = result.replace(
+                    "{{" + entry.getKey() + "}}",
+                    entry.getValue()
+            );
+        }
+        return result;
+    }
+
     public ResponseEntity<?> sendEmailWithToken(EmailRequest request, boolean isRegister, boolean isPasswordReset) {
         LOGGER.info("Attempting to send an email with a token");
 
@@ -262,9 +346,10 @@ public class EmailService implements EmailSender {
                 LOGGER.error("Token has expired when attempting to enable user - resending email");
 
                 EmailRequest emailRequest = new EmailRequest(confirmationToken.getEmail(),
-                        "donotreply@emailservice.com", true, "USER_SIGNUP");
-                sendEmail(emailRequest, false);
+                        "donotreply@emailservice.com", true, "USER_SIGNUP",
+                        Map.of("link", "http://localhost:6080/confirm-email?token=" + token));
 
+                sendTemplateEmail(emailRequest, false);
                 return ResponseEntity.status(409).body(new Response("The token has expired - A new confirmation email has been sent"));
             }
 
