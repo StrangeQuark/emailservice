@@ -3,6 +3,7 @@ package com.strangequark.emailservice.email;
 import com.strangequark.emailservice.response.Response;
 import com.strangequark.emailservice.template.EmailTemplate;
 import com.strangequark.emailservice.template.EmailTemplateRepository;
+import com.strangequark.emailservice.template.EmailTemplateRequest;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
@@ -43,6 +44,7 @@ public class EmailService implements EmailSender {
     private final EmailValidator emailValidator;
     private final EmailTemplateRepository emailTemplateRepository;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_]+)}}");
+    private static final Pattern SYSTEM_VAR_PATTERN = Pattern.compile("\\[\\[([a-zA-Z0-9_]+)]]");
     // Integration function start: Auth
     @Autowired
     AuthUtility authUtility;
@@ -126,16 +128,6 @@ public class EmailService implements EmailSender {
         // Integration function end: Auth
 
         try {
-            //Check for templates
-            if(request.getEmailTemplateName() != null) {
-                LOGGER.info("Setting email values from template");
-                EmailTemplate template = emailTemplateRepository.findByName(request.getEmailTemplateName())
-                        .orElseThrow(() -> new RuntimeException("Template was not found"));
-
-                request.setSubject(template.getSubject());
-                request.setBody(template.getBody());
-            }
-
             //Create an email confirmation token
             UUID token = UUID.randomUUID();
             ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
@@ -161,12 +153,12 @@ public class EmailService implements EmailSender {
             LOGGER.error("Failed to send email: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(
-                    new Response("There was an error sending the email, please contact the system administrator")
+                    new Response("Failed to send email: " + ex.getMessage())
             );
         }
     }
 
-    public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt) {
+    public ResponseEntity<?> sendTemplateEmail(EmailTemplateRequest request, boolean requireJwt) {
         // Integration function start: Auth
         if(requireJwt && !jwtUtility.validateToken()) {
             LOGGER.error("Invalid JWT token");
@@ -176,12 +168,15 @@ public class EmailService implements EmailSender {
 
         try {
             LOGGER.info("Setting email values from template");
-            EmailTemplate template = emailTemplateRepository.findByName(request.getEmailTemplateName())
+            EmailTemplate template = emailTemplateRepository.findByName(request.getTemplateName())
                     .orElseThrow(() -> new RuntimeException("Template was not found"));
 
             //Create an email confirmation token
             UUID token = UUID.randomUUID();
             ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
+
+            if(request.getIncludeToken())
+                template.setBody(template.getBody().replace("[[confirmationToken]]", token.toString()));
 
             //Send the email
             ResponseEntity<?> response = send(request.getRecipient(),
@@ -203,7 +198,7 @@ public class EmailService implements EmailSender {
             LOGGER.error("Failed to send template email: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(
-                    new Response("There was an error sending the template email, please contact the system administrator")
+                    new Response("Failed to send template email: " + ex.getMessage())
             );
         }
     }
@@ -217,22 +212,21 @@ public class EmailService implements EmailSender {
         return vars;
     }
 
-    private void validateVars(String template, Map<String, String> values) {
+    private String renderTemplateVars(String template, Map<String, String> vars) {
         Set<String> required = extractVars(template);
 
+        if (required.isEmpty())
+            return template;
+
+        if (vars == null || vars.isEmpty())
+            throw new IllegalArgumentException("Template variables are required: " + required);
+
         Set<String> missing = required.stream()
-                .filter(v -> !values.containsKey(v))
+                .filter(v -> !vars.containsKey(v))
                 .collect(Collectors.toSet());
 
-        if (!missing.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Missing template variables: " + missing
-            );
-        }
-    }
-
-    private String renderTemplateVars(String template, Map<String, String> vars) {
-        validateVars(template, vars);
+        if (!missing.isEmpty())
+            throw new IllegalArgumentException("Missing template variables: " + missing);
 
         String result = template;
         for (var entry : vars.entrySet()) {
@@ -244,53 +238,8 @@ public class EmailService implements EmailSender {
         return result;
     }
 
-    public ResponseEntity<?> sendEmailWithToken(EmailRequest request, boolean isRegister, boolean isPasswordReset) {
-        LOGGER.info("Attempting to send an email with a token");
-
-        // Integration function start: Auth
-        if(!jwtUtility.validateToken()) {
-            LOGGER.error("Invalid JWT token");
-            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
-        }
-        // Integration function end: Auth
-        if(!emailValidator.test(request.getRecipient())) {
-            LOGGER.error("Invalid recipient email address");
-            return ResponseEntity.status(400).body(new Response("Invalid recipient email address"));
-        }
-        if(!emailValidator.test(request.getSender())) {
-            LOGGER.error("Invalid sender email address");
-            return ResponseEntity.status(400).body(new Response("Invalid sender email address"));
-        }
-
-        try {
-            //Create an email confirmation token
-            UUID token = UUID.randomUUID();
-            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
-
-            //Send the email
-            ResponseEntity<?> response = send(request.getRecipient(),
-                    request.getSender(),
-                    isRegister ? buildUserSignupEmail("http://react-service/confirm-email?token=" + token) :
-                            isPasswordReset ? buildPasswordResetEmail("http://react-service/new-password?token=" + token) : request.getBody(),
-                    request.getSubject());
-            if(response.getStatusCode().value() != 200) {
-                LOGGER.error(response.toString());
-                return response;
-            }
-
-            //Save the confirmation token to the database
-            confirmationTokenRepository.save(confirmationToken);
-
-            LOGGER.info("Token email has been successfully sent");
-            //Return the token
-            return ResponseEntity.ok(new Response("Email with token successfully sent", token));
-        } catch (Exception ex) {
-            LOGGER.error("Failed to send email with token: " + ex.getMessage());
-            LOGGER.debug("Stack trace: ", ex);
-            return ResponseEntity.status(400).body(
-              new Response("There was an error sending token email, please contact the system administrator")
-            );
-        }
+    private String insertConfirmationToken(String template, String token) {
+        return template.replace("[[confirmationToken]]", token);
     }
 
     @Transactional
@@ -345,8 +294,8 @@ public class EmailService implements EmailSender {
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                 LOGGER.error("Token has expired when attempting to enable user - resending email");
 
-                EmailRequest emailRequest = new EmailRequest(confirmationToken.getEmail(),
-                        "donotreply@emailservice.com", true, "USER_SIGNUP",
+                EmailTemplateRequest emailRequest = new EmailTemplateRequest(confirmationToken.getEmail(),
+                        "donotreply@emailservice.com", true, "USER_REGISTER",
                         Map.of("link", "http://localhost:6080/confirm-email?token=" + token));
 
                 sendTemplateEmail(emailRequest, false);
@@ -416,142 +365,4 @@ public class EmailService implements EmailSender {
         LOGGER.info("User password successfully reset");
         return ResponseEntity.ok(new Response("User password successfully reset", confirmationToken.getEmail()));
     }// Integration function end: Auth
-
-    private String buildUserSignupEmail(String link) {
-        return "<div style=\"font-family:Helvetica,Arial,sans-serif;font-size:16px;margin:0;color:#0b0c0c\">\n" +
-                "\n" +
-                "<span style=\"display:none;font-size:1px;color:#fff;max-height:0\"></span>\n" +
-                "\n" +
-                "  <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;min-width:100%;width:100%!important\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n" +
-                "    <tbody><tr>\n" +
-                "      <td width=\"100%\" height=\"53\" bgcolor=\"#0b0c0c\">\n" +
-                "        \n" +
-                "        <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;max-width:580px\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"center\">\n" +
-                "          <tbody><tr>\n" +
-                "            <td width=\"70\" bgcolor=\"#0b0c0c\" valign=\"middle\">\n" +
-                "                <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse\">\n" +
-                "                  <tbody><tr>\n" +
-                "                    <td style=\"padding-left:10px\">\n" +
-                "                  \n" +
-                "                    </td>\n" +
-                "                    <td style=\"font-size:28px;line-height:1.315789474;Margin-top:4px;padding-left:10px\">\n" +
-                "                      <span style=\"font-family:Helvetica,Arial,sans-serif;font-weight:700;color:#ffffff;text-decoration:none;vertical-align:top;display:inline-block\">Activate your account</span>\n" +
-                "                    </td>\n" +
-                "                  </tr>\n" +
-                "                </tbody></table>\n" +
-                "              </a>\n" +
-                "            </td>\n" +
-                "          </tr>\n" +
-                "        </tbody></table>\n" +
-                "        \n" +
-                "      </td>\n" +
-                "    </tr>\n" +
-                "  </tbody></table>\n" +
-                "  <table role=\"presentation\" class=\"m_-6186904992287805515content\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;max-width:580px;width:100%!important\" width=\"100%\">\n" +
-                "    <tbody><tr>\n" +
-                "      <td width=\"10\" height=\"10\" valign=\"middle\"></td>\n" +
-                "      <td>\n" +
-                "        \n" +
-                "                <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse\">\n" +
-                "                  <tbody><tr>\n" +
-                "                    <td bgcolor=\"#1D70B8\" width=\"100%\" height=\"10\"></td>\n" +
-                "                  </tr>\n" +
-                "                </tbody></table>\n" +
-                "        \n" +
-                "      </td>\n" +
-                "      <td width=\"10\" valign=\"middle\" height=\"10\"></td>\n" +
-                "    </tr>\n" +
-                "  </tbody></table>\n" +
-                "\n" +
-                "\n" +
-                "\n" +
-                "  <table role=\"presentation\" class=\"m_-6186904992287805515content\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;max-width:580px;width:100%!important\" width=\"100%\">\n" +
-                "    <tbody><tr>\n" +
-                "      <td height=\"30\"><br></td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "      <td width=\"10\" valign=\"middle\"><br></td>\n" +
-                "      <td style=\"font-family:Helvetica,Arial,sans-serif;font-size:19px;line-height:1.315789474;max-width:560px\">\n" +
-                "        \n" +
-                "            <p style=\"Margin:0 0 20px 0;font-size:19px;line-height:25px;color:#0b0c0c\">Hello,</p><p style=\"Margin:0 0 20px 0;font-size:19px;line-height:25px;color:#0b0c0c\"> Please click on the confirmation link below to activate your account: </p><blockquote style=\"Margin:0 0 20px 0;border-left:10px solid #b1b4b6;padding:15px 0 0.1px 15px;font-size:19px;line-height:25px\"><p style=\"Margin:0 0 20px 0;font-size:19px;line-height:25px;color:#0b0c0c\"> <a href=\"" + link + "\">" + link + "</a> </p></blockquote>\n This link will expire in 15 minutes. <p>Thank you</p>" +
-                "        \n" +
-                "      </td>\n" +
-                "      <td width=\"10\" valign=\"middle\"><br></td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "      <td height=\"30\"><br></td>\n" +
-                "    </tr>\n" +
-                "  </tbody></table><div class=\"yj6qo\"></div><div class=\"adL\">\n" +
-                "\n" +
-                "</div></div>";
-    }
-
-    private String buildPasswordResetEmail(String link) {
-        return "<div style=\"font-family:Helvetica,Arial,sans-serif;font-size:16px;margin:0;color:#0b0c0c\">\n" +
-                "\n" +
-                "<span style=\"display:none;font-size:1px;color:#fff;max-height:0\"></span>\n" +
-                "\n" +
-                "  <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;min-width:100%;width:100%!important\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n" +
-                "    <tbody><tr>\n" +
-                "      <td width=\"100%\" height=\"53\" bgcolor=\"#0b0c0c\">\n" +
-                "        \n" +
-                "        <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;max-width:580px\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"center\">\n" +
-                "          <tbody><tr>\n" +
-                "            <td width=\"70\" bgcolor=\"#0b0c0c\" valign=\"middle\">\n" +
-                "                <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse\">\n" +
-                "                  <tbody><tr>\n" +
-                "                    <td style=\"padding-left:10px\">\n" +
-                "                  \n" +
-                "                    </td>\n" +
-                "                    <td style=\"font-size:28px;line-height:1.315789474;Margin-top:4px;padding-left:10px\">\n" +
-                "                      <span style=\"font-family:Helvetica,Arial,sans-serif;font-weight:700;color:#ffffff;text-decoration:none;vertical-align:top;display:inline-block\">Reset your password</span>\n" +
-                "                    </td>\n" +
-                "                  </tr>\n" +
-                "                </tbody></table>\n" +
-                "              </a>\n" +
-                "            </td>\n" +
-                "          </tr>\n" +
-                "        </tbody></table>\n" +
-                "        \n" +
-                "      </td>\n" +
-                "    </tr>\n" +
-                "  </tbody></table>\n" +
-                "  <table role=\"presentation\" class=\"m_-6186904992287805515content\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;max-width:580px;width:100%!important\" width=\"100%\">\n" +
-                "    <tbody><tr>\n" +
-                "      <td width=\"10\" height=\"10\" valign=\"middle\"></td>\n" +
-                "      <td>\n" +
-                "        \n" +
-                "                <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse\">\n" +
-                "                  <tbody><tr>\n" +
-                "                    <td bgcolor=\"#1D70B8\" width=\"100%\" height=\"10\"></td>\n" +
-                "                  </tr>\n" +
-                "                </tbody></table>\n" +
-                "        \n" +
-                "      </td>\n" +
-                "      <td width=\"10\" valign=\"middle\" height=\"10\"></td>\n" +
-                "    </tr>\n" +
-                "  </tbody></table>\n" +
-                "\n" +
-                "\n" +
-                "\n" +
-                "  <table role=\"presentation\" class=\"m_-6186904992287805515content\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;max-width:580px;width:100%!important\" width=\"100%\">\n" +
-                "    <tbody><tr>\n" +
-                "      <td height=\"30\"><br></td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "      <td width=\"10\" valign=\"middle\"><br></td>\n" +
-                "      <td style=\"font-family:Helvetica,Arial,sans-serif;font-size:19px;line-height:1.315789474;max-width:560px\">\n" +
-                "        \n" +
-                "            <p style=\"Margin:0 0 20px 0;font-size:19px;line-height:25px;color:#0b0c0c\">Hi,</p><p style=\"Margin:0 0 20px 0;font-size:19px;line-height:25px;color:#0b0c0c\"> Please click on the below link to reset your password: </p><blockquote style=\"Margin:0 0 20px 0;border-left:10px solid #b1b4b6;padding:15px 0 0.1px 15px;font-size:19px;line-height:25px\"><p style=\"Margin:0 0 20px 0;font-size:19px;line-height:25px;color:#0b0c0c\"> <a href=\"" + link + "\">Reset password</a> </p></blockquote>\n This link will expire in 15 minutes. <p>Thank you</p>" +
-                "        \n" +
-                "      </td>\n" +
-                "      <td width=\"10\" valign=\"middle\"><br></td>\n" +
-                "    </tr>\n" +
-                "    <tr>\n" +
-                "      <td height=\"30\"><br></td>\n" +
-                "    </tr>\n" +
-                "  </tbody></table><div class=\"yj6qo\"></div><div class=\"adL\">\n" +
-                "\n" +
-                "</div></div>";
-    }
 }

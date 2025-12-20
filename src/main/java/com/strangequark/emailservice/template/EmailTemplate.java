@@ -43,7 +43,6 @@ public class EmailTemplate {
         this.createdAt = LocalDateTime.now();
     }
 
-
     public UUID getId() {
         return id;
     }

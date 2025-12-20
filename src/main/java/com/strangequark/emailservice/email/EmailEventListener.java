@@ -1,5 +1,6 @@
 package com.strangequark.emailservice.email;
 
+import com.strangequark.emailservice.template.EmailTemplateRequest;
 import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
 import com.strangequark.emailservice.utility.TelemetryUtility; // Integration line: Telemetry
 import org.apache.kafka.clients.admin.NewTopic;
@@ -47,9 +48,7 @@ public class EmailEventListener {
     public Collection<NewTopic> kafkaTopics() {
         return List.of(
                 TopicBuilder.name("general-email-events").partitions(1).replicas(1).build(),
-                TopicBuilder.name("token-email-events").partitions(1).replicas(1).build(),
-                TopicBuilder.name("register-email-events").partitions(1).replicas(1).build(),
-                TopicBuilder.name("password-reset-email-events").partitions(1).replicas(1).build()
+                TopicBuilder.name("template-email-events").partitions(1).replicas(1).build()
         );
     }
 
@@ -62,7 +61,6 @@ public class EmailEventListener {
         return factory;
     }
 
-
     @KafkaListener(topics = "general-email-events", groupId = "email-group")
     public void generalEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("General email event received");
@@ -74,52 +72,24 @@ public class EmailEventListener {
                 )
         ); // Integration function end: Telemetry
 
-        emailService.send(emailRequest.getRecipient(), emailRequest.getSender(), emailRequest.getBody(), emailRequest.getSubject());
+        emailService.sendEmail(emailRequest, true);
     }
 
-    @KafkaListener(topics = "token-email-events", groupId = "email-group")
-    public void tokenEmailEvents(ConsumerRecord<String, EmailRequest> record) {
-        LOGGER.info("Token email event received");
-        EmailRequest emailRequest = record.value();
+    @KafkaListener(topics = "template-email-events", groupId = "email-group")
+    public void templateEmailEvents(ConsumerRecord<String, EmailTemplateRequest> record) {
+        LOGGER.info("Template email event received");
+        EmailTemplateRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
         // Integration function start: Telemetry
-        telemetryUtility.sendTelemetryEvent("email-event-token", Map.of(
+        telemetryUtility.sendTelemetryEvent("email-event-template", Map.of(
                         "userId", jwtUtility.extractId() // Integration line: Auth
                 )
         ); // Integration function end: Telemetry
 
-        emailService.sendEmailWithToken(emailRequest, false, false);
-    }
-
-    @KafkaListener(topics = "register-email-events", groupId = "email-group")
-    public void registerEmailEvents(ConsumerRecord<String, EmailRequest> record) {
-        LOGGER.info("Register email event received");
-        EmailRequest emailRequest = record.value();
-        setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
-        // Integration function start: Telemetry
-        telemetryUtility.sendTelemetryEvent("email-event-register", Map.of(
-                        "userId", jwtUtility.extractId() // Integration line: Auth
-                )
-        ); // Integration function end: Telemetry
-
-        emailService.sendEmailWithToken(emailRequest, true, false);
-    }
-
-    @KafkaListener(topics = "password-reset-email-events", groupId = "email-group")
-    public void passwordResetEmailEvents(ConsumerRecord<String, EmailRequest> record) {
-        LOGGER.info("Password reset email event received");
-        EmailRequest emailRequest = record.value();
-        setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
-        // Integration function start: Telemetry
-        telemetryUtility.sendTelemetryEvent("email-event-password-reset", Map.of(
-                        "userId", jwtUtility.extractId() // Integration line: Auth
-                )
-        ); // Integration function end: Telemetry
-
-        emailService.sendEmailWithToken(emailRequest, false, true);
+        emailService.sendTemplateEmail(emailRequest, true);
     }
     // Integration function start: Auth
-    public void setAuthHeaderFromKafkaConsumerRecord(ConsumerRecord<String, EmailRequest> record) {
+    public void setAuthHeaderFromKafkaConsumerRecord(ConsumerRecord<String, ?> record) {
         LOGGER.info("Setting authorization header from Kafka consumer record");
 
         // Extract JWT from Kafka header

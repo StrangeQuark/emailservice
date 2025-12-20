@@ -1,5 +1,6 @@
 package com.strangequark.emailservice.email;
 
+import com.strangequark.emailservice.template.EmailTemplateRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,23 +22,8 @@ public class EmailController {
     }
 
     @PostMapping(path = "/send-template-email")
-    public ResponseEntity<?> sendTemplateEmail(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> sendTemplateEmail(@RequestBody EmailTemplateRequest request) {
         return emailService.sendTemplateEmail(request, true);
-    }
-
-    @PostMapping(path = "/send-email-with-token")
-    public ResponseEntity<?> sendEmailWithToken(@RequestBody EmailRequest request) {
-        return emailService.sendEmailWithToken(request, false, false);
-    }
-
-    @PostMapping(path = "/send-register-email")
-    public ResponseEntity<?> sendRegisterEmail(@RequestBody EmailRequest request) {
-        return emailService.sendEmailWithToken(request, true, false);
-    }
-
-    @PostMapping(path = "/send-password-reset-email")
-    public ResponseEntity<?> sendPasswordResetEmail(@RequestBody EmailRequest request) {
-        return emailService.sendEmailWithToken(request, false, true);
     }
 
     @GetMapping(path = "/confirm-token")

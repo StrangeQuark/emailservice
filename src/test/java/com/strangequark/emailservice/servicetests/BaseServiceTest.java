@@ -3,6 +3,7 @@ package com.strangequark.emailservice.servicetests;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,5 +45,11 @@ public abstract class BaseServiceTest {
                 LocalDateTime.now().plusMinutes(15), "test@test.com");
 
         confirmationTokenRepository.save(confirmationToken);
+    }
+
+    @AfterEach
+    void teardown() {
+        confirmationTokenRepository.deleteAll();
+        confirmationTokenRepository.flush();
     }
 }
