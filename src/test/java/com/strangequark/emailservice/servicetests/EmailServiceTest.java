@@ -34,11 +34,24 @@ public class EmailServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void sendEmailWithoutTokenTest() {
+        EmailRequest emailRequest = new EmailRequest("recipient@test.com", "sender@test.com",
+                "Email body", "Email subject", false);
+
+        ResponseEntity<?> response =  emailService.sendEmail(emailRequest, false);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+
+        // Expect there to be 1 element in the CTR, since we initialize one in setup function
+        Assertions.assertEquals(1, confirmationTokenRepository.findAll().size());
+    }
+
+    @Test
     void sendEmailWithTokenTest() {
         EmailRequest emailRequest = new EmailRequest("recipient@test.com", "sender@test.com",
                 "Email body", "Email subject", true);
 
-        ResponseEntity<?> response =  emailService.sendEmailWithToken(emailRequest, false, false);
+        ResponseEntity<?> response =  emailService.sendEmail(emailRequest, false);
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertEquals(confirmationTokenRepository.findAll().get(1).getEmail(), "recipient@test.com");
