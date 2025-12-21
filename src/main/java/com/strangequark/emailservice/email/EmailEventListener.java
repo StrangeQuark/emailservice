@@ -44,24 +44,31 @@ public class EmailEventListener {
     }
 
     // Initialize the email-events topics on startup
-    @Bean
-    public Collection<NewTopic> kafkaTopics() {
-        return List.of(
-                TopicBuilder.name("general-email-events").partitions(1).replicas(1).build(),
-                TopicBuilder.name("template-email-events").partitions(1).replicas(1).build()
-        );
-    }
+//    @Bean
+//    public Collection<NewTopic> kafkaTopics() {
+//        return List.of(
+//                TopicBuilder.name("general-email-events").partitions(1).replicas(1).build(),
+//                TopicBuilder.name("template-email-events").partitions(1).replicas(1).build()
+//        );
+//    }
 
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, EmailRequest> kafkaListenerContainerFactory(ConsumerFactory<String, EmailRequest> consumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, EmailRequest> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory);
-        factory.setCommonErrorHandler(new DefaultErrorHandler(new FixedBackOff(1000L, 2)));
+//    @Bean
+//    public ConcurrentKafkaListenerContainerFactory<String, EmailRequest> generalFactory(ConsumerFactory<Object, Object> consumerFactory) {
+//        ConcurrentKafkaListenerContainerFactory<String, EmailRequest> factory = new ConcurrentKafkaListenerContainerFactory<>();
+//        factory.setConsumerFactory(consumerFactory);
+//        factory.setCommonErrorHandler(new DefaultErrorHandler(new FixedBackOff(1000L, 2)));
+//        return factory;
+//    }
+//
+//    @Bean
+//    public ConcurrentKafkaListenerContainerFactory<String, EmailTemplateRequest> templateFactory(ConsumerFactory<Object, Object> consumerFactory) {
+//        ConcurrentKafkaListenerContainerFactory<String, EmailTemplateRequest> factory = new ConcurrentKafkaListenerContainerFactory<>();
+//        factory.setConsumerFactory(consumerFactory);
+//        factory.setCommonErrorHandler(new DefaultErrorHandler(new FixedBackOff(1000L, 2)));
+//        return factory;
+//    }
 
-        return factory;
-    }
-
-    @KafkaListener(topics = "general-email-events", groupId = "email-group")
+    @KafkaListener(topics = "general-email-events", groupId = "email-group", containerFactory = "generalFactory")
     public void generalEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("General email event received");
         EmailRequest emailRequest = record.value();
@@ -75,7 +82,7 @@ public class EmailEventListener {
         emailService.sendEmail(emailRequest, true);
     }
 
-    @KafkaListener(topics = "template-email-events", groupId = "email-group")
+    @KafkaListener(topics = "template-email-events", groupId = "email-group", containerFactory = "templateFactory")
     public void templateEmailEvents(ConsumerRecord<String, EmailTemplateRequest> record) {
         LOGGER.info("Template email event received");
         EmailTemplateRequest emailRequest = record.value();
