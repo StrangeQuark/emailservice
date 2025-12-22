@@ -25,6 +25,11 @@ public class EmailController {
         return emailService.sendTemplateEmail(request, true);
     }
 
+    @PostMapping(path = "/create-template-email")
+    public ResponseEntity<?> createTemplateEmail(@RequestBody EmailRequest request) {
+        return emailService.createTemplateEmail(request, true);
+    }
+
     @GetMapping(path = "/confirm-token")
     public ResponseEntity<?> confirmToken(@RequestParam("token") UUID token) {
         return emailService.confirmToken(token);
