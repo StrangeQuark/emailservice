@@ -158,14 +158,16 @@ public class EmailService implements EmailSender {
     }
 
     public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt) {
-        // Integration function start: Auth
-        if(requireJwt && !jwtUtility.validateToken()) {
-            LOGGER.error("Invalid JWT token");
-            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
-        }
-        // Integration function end: Auth
+        LOGGER.info("Sending template email");
 
         try {
+            // Integration function start: Auth
+            if(requireJwt && !jwtUtility.validateToken()) {
+                LOGGER.error("Invalid JWT token");
+                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            }
+            // Integration function end: Auth
+
             LOGGER.info("Setting email values from template");
             EmailTemplate template = emailTemplateRepository.findByName(request.getTemplateName())
                     .orElseThrow(() -> new RuntimeException("Template was not found"));
@@ -198,6 +200,44 @@ public class EmailService implements EmailSender {
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(
                     new Response("Failed to send template email: " + ex.getMessage())
+            );
+        }
+    }
+
+    public ResponseEntity<?> createTemplateEmail(EmailRequest request, boolean requireJwt) {
+        LOGGER.info("Attempting to create template email");
+
+        try {
+            // Integration function start: Auth
+            if(requireJwt && !jwtUtility.validateToken()) {
+                LOGGER.error("Invalid JWT token");
+                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            }
+            // Integration function end: Auth
+            if(request.getTemplateName() == null || request.getTemplateName().equals(""))
+                throw new RuntimeException("Template name must not be null");
+
+            if(emailTemplateRepository.findByName(request.getTemplateName()).isPresent())
+                throw new RuntimeException("Template with name " + request.getTemplateName() + " already exists");
+
+            if(request.getSubject() == null || request.getSubject().equals(""))
+                throw new RuntimeException("Template subject must not be null");
+
+            if(request.getBody() == null || request.getBody().equals(""))
+                throw new RuntimeException("Template body must not be null");
+
+            LOGGER.debug("Building the template object");
+            EmailTemplate template = new EmailTemplate(request.getTemplateName(), request.getSubject(), request.getBody());
+
+            emailTemplateRepository.save(template);
+
+            LOGGER.info("Template creation successful");
+            return ResponseEntity.ok(new Response("Template creation successful"));
+        } catch (Exception ex) {
+            LOGGER.error("Failed to create template: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(
+                    new Response("Failed to create template: " + ex.getMessage())
             );
         }
     }
