@@ -1,6 +1,7 @@
-package com.strangequark.emailservice.email;
+package com.strangequark.emailservice.kafka;
 
-import com.strangequark.emailservice.template.EmailTemplateRequest;
+import com.strangequark.emailservice.email.EmailRequest;
+import com.strangequark.emailservice.email.EmailService;
 import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
 import com.strangequark.emailservice.utility.TelemetryUtility; // Integration line: Telemetry
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -34,7 +35,7 @@ public class EmailEventListener {
         this.emailService = emailService;
     }
 
-    @KafkaListener(topics = "general-email-events", groupId = "email-group", containerFactory = "generalFactory")
+    @KafkaListener(topics = "general-email-events", groupId = "email-group")
     public void generalEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("General email event received");
         EmailRequest emailRequest = record.value();
@@ -48,10 +49,10 @@ public class EmailEventListener {
         emailService.sendEmail(emailRequest, true);
     }
 
-    @KafkaListener(topics = "template-email-events", groupId = "email-group", containerFactory = "templateFactory")
-    public void templateEmailEvents(ConsumerRecord<String, EmailTemplateRequest> record) {
+    @KafkaListener(topics = "template-email-events", groupId = "email-group")
+    public void templateEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("Template email event received");
-        EmailTemplateRequest emailRequest = record.value();
+        EmailRequest emailRequest = record.value();
         setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
         // Integration function start: Telemetry
         telemetryUtility.sendTelemetryEvent("email-event-template", Map.of(
