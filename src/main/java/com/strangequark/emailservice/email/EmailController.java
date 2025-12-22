@@ -1,6 +1,5 @@
 package com.strangequark.emailservice.email;
 
-import com.strangequark.emailservice.template.EmailTemplateRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +21,7 @@ public class EmailController {
     }
 
     @PostMapping(path = "/send-template-email")
-    public ResponseEntity<?> sendTemplateEmail(@RequestBody EmailTemplateRequest request) {
+    public ResponseEntity<?> sendTemplateEmail(@RequestBody EmailRequest request) {
         return emailService.sendTemplateEmail(request, true);
     }
 

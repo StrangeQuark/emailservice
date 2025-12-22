@@ -3,7 +3,6 @@ package com.strangequark.emailservice.email;
 import com.strangequark.emailservice.response.Response;
 import com.strangequark.emailservice.template.EmailTemplate;
 import com.strangequark.emailservice.template.EmailTemplateRepository;
-import com.strangequark.emailservice.template.EmailTemplateRequest;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
@@ -158,7 +157,7 @@ public class EmailService implements EmailSender {
         }
     }
 
-    public ResponseEntity<?> sendTemplateEmail(EmailTemplateRequest request, boolean requireJwt) {
+    public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt) {
         // Integration function start: Auth
         if(requireJwt && !jwtUtility.validateToken()) {
             LOGGER.error("Invalid JWT token");
@@ -294,7 +293,7 @@ public class EmailService implements EmailSender {
             if (confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
                 LOGGER.error("Token has expired when attempting to enable user - resending email");
 
-                EmailTemplateRequest emailRequest = new EmailTemplateRequest(confirmationToken.getEmail(),
+                EmailRequest emailRequest = new EmailRequest(confirmationToken.getEmail(),
                         "donotreply@emailservice.com", true, "USER_REGISTER",
                         Map.of("link", "http://localhost:6080/confirm-email?token=" + token));
 

@@ -1,22 +1,38 @@
 package com.strangequark.emailservice.email;
 
+import java.util.Map;
+
 public class EmailRequest {
     private String recipient;
     private String sender;
     private String body;
     private String subject;
     private boolean includeToken;
+    private String templateName;
+    private Map<String, String> templateVariables;
 
     public EmailRequest() {
 
     }
 
-    public EmailRequest(String recipient, String sender, String body, String subject, boolean includeToken) {
-        this.recipient = recipient;
-        this.sender = sender;
+    public EmailRequest(String body, String subject) {
         this.body = body;
         this.subject = subject;
+    }
+
+    public EmailRequest(String recipient, String sender, String body, String subject, boolean includeToken) {
+        this(body, subject);
+        this.recipient = recipient;
+        this.sender = sender;
         this.includeToken = includeToken;
+    }
+
+    public EmailRequest(String recipient, String sender, boolean includeToken, String templateName, Map<String, String> templateVariables) {
+        this.recipient = recipient;
+        this.sender = sender;
+        this.includeToken = includeToken;
+        this.templateName = templateName;
+        this.templateVariables = templateVariables;
     }
 
     public String getRecipient() {
@@ -57,5 +73,21 @@ public class EmailRequest {
 
     public void setIncludeToken(boolean includeToken) {
         this.includeToken = includeToken;
+    }
+
+    public String getTemplateName() {
+        return templateName;
+    }
+
+    public void setTemplateName(String templateName) {
+        this.templateName = templateName;
+    }
+
+    public Map<String, String> getTemplateVariables() {
+        return templateVariables;
+    }
+
+    public void setTemplateVariables(Map<String, String> templateVariables) {
+        this.templateVariables = templateVariables;
     }
 }
