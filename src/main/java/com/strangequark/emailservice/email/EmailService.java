@@ -176,13 +176,15 @@ public class EmailService implements EmailSender {
             UUID token = UUID.randomUUID();
             ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
 
+            //Extract the template body and render template variables
+            String body = renderTemplateVars(template.getBody(), request.getTemplateVariables());
             if(request.getIncludeToken())
-                template.setBody(template.getBody().replace("[[confirmationToken]]", token.toString()));
+                body = (body.replace("[[confirmationToken]]", token.toString()));
 
             //Send the email
             ResponseEntity<?> response = send(request.getRecipient(),
                     request.getSender(),
-                    renderTemplateVars(template.getBody(), request.getTemplateVariables()),
+                    body,
                     template.getSubject());
             if(response.getStatusCode().value() != 200) {
                 LOGGER.error(response.toString());
