@@ -42,7 +42,7 @@ public class EmailService implements EmailSender {
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailValidator emailValidator;
     private final EmailTemplateRepository emailTemplateRepository;
-    private static final Pattern VAR_PATTERN = Pattern.compile("\\{\\{([a-zA-Z0-9_]+)}}");
+    private static final Pattern VAR_PATTERN = Pattern.compile("\\{\\{\\s*([a-zA-Z][a-zA-Z0-9_]*)\\s*(?:\\|\\|(.+?))?\\s*}}");
     private static final Pattern SYSTEM_VAR_PATTERN = Pattern.compile("\\[\\[([a-zA-Z0-9_]+)]]");
     // Integration function start: Auth
     @Autowired
@@ -179,7 +179,7 @@ public class EmailService implements EmailSender {
             //Extract the template body and render template variables
             String body = renderTemplateVars(template.getBody(), request.getTemplateVariables());
             if(request.getIncludeToken())
-                body = (body.replace("[[confirmationToken]]", token.toString()));
+                body = insertConfirmationToken(body, token.toString());
 
             //Send the email
             ResponseEntity<?> response = send(request.getRecipient(),
@@ -245,42 +245,71 @@ public class EmailService implements EmailSender {
     }
 
     private Set<String> extractVars(String template) {
+        if (template == null || template.isBlank())
+            return Set.of();
+
         Matcher matcher = VAR_PATTERN.matcher(template);
-        Set<String> vars = new HashSet<>();
+        Set<String> required = new HashSet<>();
+
         while (matcher.find()) {
-            vars.add(matcher.group(1));
+            String varName = matcher.group(1);
+            String defaultValue = matcher.group(2);
+
+            if (defaultValue == null) {
+                required.add(varName);
+            }
         }
-        return vars;
+
+        return required;
     }
 
     private String renderTemplateVars(String template, Map<String, String> vars) {
-        Set<String> required = extractVars(template);
-
-        if (required.isEmpty())
+        if (template == null || template.isBlank())
             return template;
 
-        if (vars == null || vars.isEmpty())
-            throw new IllegalArgumentException("Template variables are required: " + required);
+        Matcher matcher = VAR_PATTERN.matcher(template);
+        StringBuffer rendered = new StringBuffer();
 
-        Set<String> missing = required.stream()
-                .filter(v -> !vars.containsKey(v))
-                .collect(Collectors.toSet());
+        Set<String> missingRequired = new HashSet<>();
 
-        if (!missing.isEmpty())
-            throw new IllegalArgumentException("Missing template variables: " + missing);
+        while (matcher.find()) {
+            String varName = matcher.group(1);
+            String defaultValue = matcher.group(2);
 
-        String result = template;
-        for (var entry : vars.entrySet()) {
-            result = result.replace(
-                    "{{" + entry.getKey() + "}}",
-                    entry.getValue()
+            String resolved = null;
+
+            if (vars != null) {
+                resolved = vars.get(varName);
+            }
+
+            if (resolved == null) {
+                resolved = defaultValue;
+            }
+
+            if (resolved == null) {
+                missingRequired.add(varName);
+                continue;
+            }
+
+            matcher.appendReplacement(
+                    rendered,
+                    Matcher.quoteReplacement(resolved)
             );
         }
-        return result;
+
+        matcher.appendTail(rendered);
+
+        if (!missingRequired.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Missing template variables: " + missingRequired
+            );
+        }
+
+        return rendered.toString();
     }
 
-    private String insertConfirmationToken(String template, String token) {
-        return template.replace("[[confirmationToken]]", token);
+    private String insertConfirmationToken(String body, String token) {
+        return body.replace("[[confirmationToken]]", token);
     }
 
     @Transactional
