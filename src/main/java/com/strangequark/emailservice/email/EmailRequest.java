@@ -20,6 +20,11 @@ public class EmailRequest {
         this.subject = subject;
     }
 
+    public EmailRequest(String body, String subject, String templateName) {
+        this(body, subject);
+        this.templateName = templateName;
+    }
+
     public EmailRequest(String recipient, String sender, String body, String subject, boolean includeToken) {
         this(body, subject);
         this.recipient = recipient;

@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 @Configuration
@@ -244,74 +243,6 @@ public class EmailService implements EmailSender {
         }
     }
 
-    private Set<String> extractVars(String template) {
-        if (template == null || template.isBlank())
-            return Set.of();
-
-        Matcher matcher = VAR_PATTERN.matcher(template);
-        Set<String> required = new HashSet<>();
-
-        while (matcher.find()) {
-            String varName = matcher.group(1);
-            String defaultValue = matcher.group(2);
-
-            if (defaultValue == null) {
-                required.add(varName);
-            }
-        }
-
-        return required;
-    }
-
-    private String renderTemplateVars(String template, Map<String, String> vars) {
-        if (template == null || template.isBlank())
-            return template;
-
-        Matcher matcher = VAR_PATTERN.matcher(template);
-        StringBuffer rendered = new StringBuffer();
-
-        Set<String> missingRequired = new HashSet<>();
-
-        while (matcher.find()) {
-            String varName = matcher.group(1);
-            String defaultValue = matcher.group(2);
-
-            String resolved = null;
-
-            if (vars != null) {
-                resolved = vars.get(varName);
-            }
-
-            if (resolved == null) {
-                resolved = defaultValue;
-            }
-
-            if (resolved == null) {
-                missingRequired.add(varName);
-                continue;
-            }
-
-            matcher.appendReplacement(
-                    rendered,
-                    Matcher.quoteReplacement(resolved)
-            );
-        }
-
-        matcher.appendTail(rendered);
-
-        if (!missingRequired.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Missing template variables: " + missingRequired
-            );
-        }
-
-        return rendered.toString();
-    }
-
-    private String insertConfirmationToken(String body, String token) {
-        return body.replace("[[confirmationToken]]", token);
-    }
-
     @Transactional
     public ResponseEntity<?> confirmToken(UUID token) {
         LOGGER.info("Attempting to confirm token");
@@ -434,5 +365,54 @@ public class EmailService implements EmailSender {
 
         LOGGER.info("User password successfully reset");
         return ResponseEntity.ok(new Response("User password successfully reset", confirmationToken.getEmail()));
-    }// Integration function end: Auth
+    }
+    // Integration function end: Auth
+    private String renderTemplateVars(String template, Map<String, String> vars) {
+        if (template == null || template.isBlank())
+            return template;
+
+        Matcher matcher = VAR_PATTERN.matcher(template);
+        StringBuffer rendered = new StringBuffer();
+
+        Set<String> missingRequired = new HashSet<>();
+
+        while (matcher.find()) {
+            String varName = matcher.group(1);
+            String defaultValue = matcher.group(2);
+
+            String resolved = null;
+
+            if (vars != null) {
+                resolved = vars.get(varName);
+            }
+
+            if (resolved == null) {
+                resolved = defaultValue;
+            }
+
+            if (resolved == null) {
+                missingRequired.add(varName);
+                continue;
+            }
+
+            matcher.appendReplacement(
+                    rendered,
+                    Matcher.quoteReplacement(resolved)
+            );
+        }
+
+        matcher.appendTail(rendered);
+
+        if (!missingRequired.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Missing template variables: " + missingRequired
+            );
+        }
+
+        return rendered.toString();
+    }
+
+    private String insertConfirmationToken(String body, String token) {
+        return body.replace("[[confirmationToken]]", token);
+    }
 }
