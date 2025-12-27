@@ -4,7 +4,6 @@ import com.strangequark.emailservice.email.EmailRequest;
 import com.strangequark.emailservice.email.EmailService;
 import com.strangequark.emailservice.response.Response; // Integration line: Auth
 import com.strangequark.emailservice.template.EmailTemplate;
-import com.strangequark.emailservice.template.EmailTemplateRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,8 +19,6 @@ import java.util.UUID; // Integration line: Auth
 public class EmailServiceTest extends BaseServiceTest {
     @Autowired
     private EmailService emailService;
-    @Autowired
-    private EmailTemplateRepository emailTemplateRepository;
 
     @BeforeEach
     void init() {
@@ -62,11 +59,20 @@ public class EmailServiceTest extends BaseServiceTest {
     }
 
     @Test
-    void sendTemplateEmailTest() {
-        emailTemplateRepository.save(new EmailTemplate("NAME", "SUBJECT", "BODY"));
+    void getTemplateEmailTest() {
+        ResponseEntity<?> response =  emailService.getTemplateEmail(testTemplateName, false);
 
+        Assertions.assertEquals(200, response.getStatusCode().value());
+
+        EmailTemplate template = (EmailTemplate) response.getBody();
+        Assertions.assertEquals(testTemplateSubject, template.getSubject());
+        Assertions.assertEquals(testTemplateBody, template.getBody());
+    }
+
+    @Test
+    void sendTemplateEmailTest() {
         EmailRequest emailRequest = new EmailRequest("recipient@test.com", "sender@test.com",
-                true, "NAME", null);
+                true, testTemplateName, null);
 
         ResponseEntity<?> response =  emailService.sendTemplateEmail(emailRequest, false);
 
@@ -76,12 +82,14 @@ public class EmailServiceTest extends BaseServiceTest {
 
     @Test
     void createTemplateEmailTest() {
-        EmailRequest emailRequest = new EmailRequest("TEST TEMPLATE BODY", "THIS IS A TEST SUBJECT", "T_NAME");
+        String createTestTemplateName = "T_NAME";
+
+        EmailRequest emailRequest = new EmailRequest("TEST TEMPLATE BODY", "THIS IS A TEST SUBJECT", createTestTemplateName);
 
         ResponseEntity<?> response =  emailService.createTemplateEmail(emailRequest, false);
 
         Assertions.assertEquals(200, response.getStatusCode().value());
-        Assertions.assertTrue(emailTemplateRepository.findByName("T_NAME").isPresent());
+        Assertions.assertTrue(emailTemplateRepository.findByName(createTestTemplateName).isPresent());
     }
 
     @Test

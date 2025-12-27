@@ -1,5 +1,7 @@
 package com.strangequark.emailservice.servicetests;
 
+import com.strangequark.emailservice.template.EmailTemplate;
+import com.strangequark.emailservice.template.EmailTemplateRepository;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
@@ -32,10 +34,15 @@ public abstract class BaseServiceTest {
     public ConfirmationTokenRepository confirmationTokenRepository;
     @MockitoBean
     public JavaMailSender javaMailSender;
+    @Autowired
+    public EmailTemplateRepository emailTemplateRepository;
     @MockitoBean // Integration line: Auth
     public JwtUtility jwtUtility; // Integration line: Auth
 
     public UUID token;
+    public String testTemplateName = "TEST_TEMPLATE_NAME";
+    public String testTemplateSubject = "TEST_TEMPLATE_SUBJECT";
+    public String testTemplateBody = "TEST TEMPLATE BODY";
 
     @BeforeEach
     void setup() {
@@ -45,11 +52,14 @@ public abstract class BaseServiceTest {
                 LocalDateTime.now().plusMinutes(15), "test@test.com");
 
         confirmationTokenRepository.save(confirmationToken);
+        emailTemplateRepository.save(new EmailTemplate(testTemplateName, testTemplateSubject, testTemplateBody));
     }
 
     @AfterEach
     void teardown() {
         confirmationTokenRepository.deleteAll();
         confirmationTokenRepository.flush();
+        emailTemplateRepository.deleteAll();
+        emailTemplateRepository.flush();
     }
 }

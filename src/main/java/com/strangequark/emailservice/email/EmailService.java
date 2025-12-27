@@ -156,6 +156,30 @@ public class EmailService implements EmailSender {
         }
     }
 
+    public ResponseEntity<?> getTemplateEmail(String templateName, boolean requireJwt) {
+        LOGGER.info("Getting template email");
+
+        try {
+            // Integration function start: Auth
+            if(requireJwt && !jwtUtility.validateToken()) {
+                LOGGER.error("Invalid JWT token");
+                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            }
+            // Integration function end: Auth
+            EmailTemplate template = emailTemplateRepository.findByName(templateName)
+                    .orElseThrow(() -> new RuntimeException("Template was not found"));
+
+            LOGGER.info("Template successfully retrieved");
+            return ResponseEntity.ok(template);
+        } catch (Exception ex) {
+            LOGGER.error("Failed to retrieve template email: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(
+                    new Response("Failed to retrieve template email: " + ex.getMessage())
+            );
+        }
+    }
+
     public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt) {
         LOGGER.info("Sending template email");
 
