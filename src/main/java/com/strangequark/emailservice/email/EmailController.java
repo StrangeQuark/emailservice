@@ -20,6 +20,11 @@ public class EmailController {
         return emailService.sendEmail(request, true);
     }
 
+    @GetMapping(path = "/get-template-email")
+    public ResponseEntity<?> getTemplateEmail(@RequestParam("templateName") String templateName) {
+        return emailService.getTemplateEmail(templateName, true);
+    }
+
     @PostMapping(path = "/send-template-email")
     public ResponseEntity<?> sendTemplateEmail(@RequestBody EmailRequest request) {
         return emailService.sendTemplateEmail(request, true);
