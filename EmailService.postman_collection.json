@@ -56,7 +56,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"email\": \"Test email body\",\r\n    \"subject\": \"Test email subject\"\r\n}",
+					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"body\": \"Test email body\",\r\n    \"subject\": \"Test email subject\",\r\n    \"includeToken\": true\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -80,7 +80,7 @@
 			"response": []
 		},
 		{
-			"name": "Send Email With Token",
+			"name": "Get Template Email",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -92,19 +92,10 @@
 						}
 					]
 				},
-				"method": "POST",
+				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"email\": \"Test email body with token\",\r\n    \"subject\": \"Test email subject with token\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
 				"url": {
-					"raw": "http://localhost:6005/api/email/send-email-with-token",
+					"raw": "http://localhost:6005/api/email/get-template-email?templateName=USER_REGISTER",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -113,14 +104,20 @@
 					"path": [
 						"api",
 						"email",
-						"send-email-with-token"
+						"get-template-email"
+					],
+					"query": [
+						{
+							"key": "templateName",
+							"value": "USER_REGISTER"
+						}
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Send Register Email",
+			"name": "Send Template Email",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -136,7 +133,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"subject\": \"Test register email subject\"\r\n}",
+					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"includeToken\": true,\r\n    \"templateName\": \"USER_REGISTER\",\r\n    \"templateVariables\": {\r\n        \"link\": \"http://localhost:6080\"\r\n    }\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -144,7 +141,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:6005/api/email/send-register-email",
+					"raw": "http://localhost:6005/api/email/send-template-email",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -153,14 +150,14 @@
 					"path": [
 						"api",
 						"email",
-						"send-register-email"
+						"send-template-email"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Send Password Reset Email",
+			"name": "Create Template",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -176,7 +173,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"recipient\": \"test@test.com\",\r\n    \"sender\": \"test@emailservice.com\",\r\n    \"subject\": \"Test password reset email subject\"\r\n}",
+					"raw": "{\r\n    \"templateName\": \"TEST_TEMPLATE\",\r\n    \"subject\": \"This is a test template email\",\r\n    \"body\": \"Test body with a confirmation token link: {{link}}?token=[[confirmationToken]]\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -184,7 +181,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:6005/api/email/send-password-reset-email",
+					"raw": "http://localhost:6005/api/email/create-template-email",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -193,7 +190,7 @@
 					"path": [
 						"api",
 						"email",
-						"send-password-reset-email"
+						"create-template-email"
 					]
 				}
 			},
@@ -277,45 +274,55 @@
 			},
 			"response": []
 		},
-        {
-          "name": "Reset user password",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:6005/api/email/reset-user-password?token=fc18594a-a9be-47b9-9754-eb048a32c48e&newPassword=newPassword123",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "6005",
-              "path": [
-                "api",
-                "email",
-                "reset-user-password"
-              ],
-              "query": [
-                {
-                  "key": "token",
-                  "value": "fc18594a-a9be-47b9-9754-eb048a32c48e"
-                },
-                {
-                  "key": "newPassword",
-                  "value": "newPassword123"
-                }
-              ]
-            }
-          },
-          "response": []
-        }
+		{
+			"name": "Reset user password",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:6005/api/email/reset-user-password?token=fc18594a-a9be-47b9-9754-eb048a32c48e&newPassword=newPassword123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6005",
+					"path": [
+						"api",
+						"email",
+						"reset-user-password"
+					],
+					"query": [
+						{
+							"key": "token",
+							"value": "fc18594a-a9be-47b9-9754-eb048a32c48e"
+						},
+						{
+							"key": "newPassword",
+							"value": "newPassword123"
+						}
+					]
+				}
+			},
+			"response": []
+		}
 	]
 }
