@@ -26,7 +26,7 @@ import org.springframework.web.client.ResourceAccessException; // Integration li
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.Map; // Integration line: Telemetry
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -391,6 +391,7 @@ public class EmailService implements EmailSender {
         return ResponseEntity.ok(new Response("User password successfully reset", confirmationToken.getEmail()));
     }
     // Integration function end: Auth
+
     private String renderTemplateVars(String template, Map<String, String> vars) {
         if (template == null || template.isBlank())
             return template;
