@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'Host PC' }
+    agent { label 'linux-agent' }
 
     environment {
         VAULT_URL = credentials('VAULT_URL') // Integration line: Vault
@@ -77,8 +77,8 @@ pipeline {
     // Integration function start: Vault
     post {
         always {
-            sh "rm -f authservice.env"
-            echo "Cleaned up authservice.env"
+            sh "rm -f emailservice.env"
+            echo "Cleaned up emailservice.env"
         }
     }
     // Integration function end: Vault
