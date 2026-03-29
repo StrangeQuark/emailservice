@@ -83,8 +83,8 @@ public class TelemetryUtility {
         @Bean(name = "telemetryExecutor")
         public Executor telemetryExecutor() {
             ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-            executor.setCorePoolSize(4);
-            executor.setMaxPoolSize(8);
+            executor.setCorePoolSize(1);
+            executor.setMaxPoolSize(1);
             executor.setQueueCapacity(50);
             executor.setThreadNamePrefix("Telemetry-");
             executor.initialize();
