@@ -51,6 +51,9 @@ services:
   email-db:
     image: 'postgres:13.1-alpine'
     container_name: email-db
+    restart: unless-stopped
+    volumes:
+      - email-db-volume:/var/lib/postgresql/data/emailservice
     networks:
       - emaildb-network
     environment:
@@ -96,3 +99,5 @@ networks:
     external: true
   shared-network:
     external: true
+volumes:
+  email-db-volume:
