@@ -53,7 +53,7 @@ services:
     container_name: email-db
     restart: unless-stopped
     volumes:
-      - email-db-volume:/var/lib/postgresql/data
+      - email-db-volume:/var/lib/postgresql/data/emailservice
     networks:
       - emaildb-network
     environment:
