@@ -46,7 +46,7 @@ public class EmailController {
     }
 
     @PostMapping(path = "/reset-user-password")
-    public ResponseEntity<?> resetUserPassword(@RequestParam("token") UUID token, @RequestParam("newPassword") String newPassword) {
-        return emailService.resetUserPassword(token, newPassword);
+    public ResponseEntity<?> resetUserPassword(@RequestBody PasswordResetRequest request) {
+        return emailService.resetUserPassword(request.getToken(), request.getNewPassword());
     } // Integration function end: Auth
 }
