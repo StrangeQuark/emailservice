@@ -54,8 +54,7 @@ public class EmailServiceTest extends BaseServiceTest {
 
         ResponseEntity<?> response =  emailService.sendEmail(emailRequest, false);
 
-        Assertions.assertEquals(200, response.getStatusCode().value());
-        Assertions.assertEquals(confirmationTokenRepository.findAll().get(1).getEmail(), "recipient@test.com");
+        Assertions.assertEquals(400, response.getStatusCode().value());
     }
 
     @Test

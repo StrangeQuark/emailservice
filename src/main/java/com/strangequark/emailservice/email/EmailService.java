@@ -5,6 +5,7 @@ import com.strangequark.emailservice.template.EmailTemplate;
 import com.strangequark.emailservice.template.EmailTemplateRepository;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
+import com.strangequark.emailservice.token.TokenPurpose;
 import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
 import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
 import com.strangequark.emailservice.utility.TelemetryUtility; // Integration line: Telemetry
@@ -63,7 +64,6 @@ public class EmailService implements EmailSender {
     }
 
     @Override
-    @Async
     public ResponseEntity<?> send(String recipient, String sender, String body, String subject) {
         LOGGER.info("Attempting to send an email");
 
@@ -126,9 +126,11 @@ public class EmailService implements EmailSender {
         // Integration function end: Auth
 
         try {
-            //Create an email confirmation token
-            UUID token = UUID.randomUUID();
-            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
+            if(request.getIncludeToken()) {
+                return ResponseEntity.status(400).body(
+                        new Response("Only supported email templates can include tokens")
+                );
+            }
 
             //Send the email
             ResponseEntity<?> response = send(request.getRecipient(),
@@ -142,10 +144,6 @@ public class EmailService implements EmailSender {
 
             LOGGER.info("Email has been successfully sent");
 
-            if(request.getIncludeToken()) {
-                confirmationTokenRepository.save(confirmationToken);
-                return ResponseEntity.ok(new Response("Email successfully sent", token));
-            }
             return ResponseEntity.ok(new Response("Email successfully sent"));
         } catch (Exception ex) {
             LOGGER.error("Failed to send email: " + ex.getMessage());
@@ -195,9 +193,19 @@ public class EmailService implements EmailSender {
             EmailTemplate template = emailTemplateRepository.findByName(request.getTemplateName())
                     .orElseThrow(() -> new RuntimeException("Template was not found"));
 
-            //Create an email confirmation token
-            UUID token = UUID.randomUUID();
-            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), request.getRecipient());
+            UUID token = null;
+            ConfirmationToken confirmationToken = null;
+
+            if(request.getIncludeToken()) {
+                token = UUID.randomUUID();
+                confirmationToken = new ConfirmationToken(
+                        token,
+                        LocalDateTime.now(),
+                        LocalDateTime.now().plusMinutes(15),
+                        request.getRecipient(),
+                        getTokenPurpose(request.getTemplateName())
+                );
+            }
 
             //Extract the template body and render template variables
             String body = renderTemplateVars(template.getBody(), request.getTemplateVariables());
@@ -276,6 +284,10 @@ public class EmailService implements EmailSender {
         try {
             confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
+            if (confirmationToken.getPurpose() != TokenPurpose.REGISTRATION) {
+                return ResponseEntity.status(404).body(new Response("Token not found"));
+            }
+
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
                 LOGGER.error("Token has already been confirmed");
@@ -308,6 +320,10 @@ public class EmailService implements EmailSender {
 
         try {
             ConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
+
+            if (confirmationToken.getPurpose() != TokenPurpose.REGISTRATION) {
+                return ResponseEntity.status(404).body(new Response("Token not found"));
+            }
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
@@ -355,15 +371,14 @@ public class EmailService implements EmailSender {
     public ResponseEntity<?> resetUserPassword(UUID token, String newPassword) {
         LOGGER.info("Attempting to confirm token and reset user password");
 
-        if(!jwtUtility.validateToken()) {
-            LOGGER.error("Invalid JWT token");
-            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
-        }
-
         ConfirmationToken confirmationToken;
 
         try {
             confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
+
+            if (confirmationToken.getPurpose() != TokenPurpose.PASSWORD_RESET) {
+                return ResponseEntity.status(404).body(new Response("Token not found"));
+            }
 
             //Check if the email has already been confirmed
             if (confirmationToken.getConfirmedAt() != null) {
@@ -377,9 +392,8 @@ public class EmailService implements EmailSender {
                 return ResponseEntity.status(409).body(new Response("The token has expired"));
             }
 
-            confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
-
             authUtility.resetPassword(confirmationToken.getEmail(), newPassword);
+            confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
             telemetryUtility.sendTelemetryEvent("email-reset-password", Map.of()); // Integration line: Telemetry
         } catch (Exception ex) {
             LOGGER.error("Failed to reset user password: " + ex.getMessage());
@@ -439,5 +453,13 @@ public class EmailService implements EmailSender {
 
     private String insertConfirmationToken(String body, String token) {
         return body.replace("[[confirmationToken]]", token);
+    }
+
+    private TokenPurpose getTokenPurpose(String templateName) {
+        return switch (templateName) {
+            case "USER_REGISTER" -> TokenPurpose.REGISTRATION;
+            case "USER_PASSWORD_RESET" -> TokenPurpose.PASSWORD_RESET;
+            default -> throw new IllegalArgumentException("This template cannot create a confirmation token");
+        };
     }
 }

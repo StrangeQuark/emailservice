@@ -15,6 +15,10 @@ public class ConfirmationToken {
     @Column(nullable=false)
     private UUID token;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable=false)
+    private TokenPurpose purpose;
+
     @Convert(converter = StringEncryptDecryptConverter.class)
     private String email;
 
@@ -33,11 +37,12 @@ public class ConfirmationToken {
 
     }
 
-    public ConfirmationToken(UUID token, LocalDateTime createdAt, LocalDateTime expiresAt, String email) {
+    public ConfirmationToken(UUID token, LocalDateTime createdAt, LocalDateTime expiresAt, String email, TokenPurpose purpose) {
         this.token = token;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
         this.email = email;
+        this.purpose = purpose;
     }
 
     public UUID getId() {
@@ -54,6 +59,14 @@ public class ConfirmationToken {
 
     public void setToken(UUID token) {
         this.token = token;
+    }
+
+    public TokenPurpose getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(TokenPurpose purpose) {
+        this.purpose = purpose;
     }
 
     public LocalDateTime getCreatedAt() {

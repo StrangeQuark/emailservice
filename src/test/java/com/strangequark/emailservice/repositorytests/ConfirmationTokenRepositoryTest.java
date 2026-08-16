@@ -2,6 +2,7 @@ package com.strangequark.emailservice.repositorytests;
 
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
+import com.strangequark.emailservice.token.TokenPurpose;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
@@ -21,7 +22,7 @@ public class ConfirmationTokenRepositoryTest extends BaseRepositoryTest {
     @BeforeEach
     void setup() {
         token = UUID.randomUUID();
-        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), "test@test.com");
+        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION);
 
         testEntityManager.persistAndFlush(confirmationToken);
     }

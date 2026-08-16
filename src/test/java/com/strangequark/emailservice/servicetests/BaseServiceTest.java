@@ -4,6 +4,7 @@ import com.strangequark.emailservice.template.EmailTemplate;
 import com.strangequark.emailservice.template.EmailTemplateRepository;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
+import com.strangequark.emailservice.token.TokenPurpose;
 import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +41,7 @@ public abstract class BaseServiceTest {
     public JwtUtility jwtUtility; // Integration line: Auth
 
     public UUID token;
-    public String testTemplateName = "TEST_TEMPLATE_NAME";
+    public String testTemplateName = "USER_REGISTER";
     public String testTemplateSubject = "TEST_TEMPLATE_SUBJECT";
     public String testTemplateBody = "TEST TEMPLATE BODY";
 
@@ -49,7 +50,7 @@ public abstract class BaseServiceTest {
         when(jwtUtility.validateToken()).thenReturn(true); // Integration line: Auth
         token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(15), "test@test.com");
+                LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION);
 
         confirmationTokenRepository.save(confirmationToken);
         emailTemplateRepository.save(new EmailTemplate(testTemplateName, testTemplateSubject, testTemplateBody));
