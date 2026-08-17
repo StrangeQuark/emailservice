@@ -25,6 +25,10 @@ public class EmailTemplate {
     @Convert(converter = StringEncryptDecryptConverter.class)
     private String body;
 
+    @Column(updatable=false)
+    @Convert(converter = StringEncryptDecryptConverter.class)
+    private String tokenPurpose;
+
     @Column(nullable=false)
     @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime createdAt;
@@ -37,9 +41,14 @@ public class EmailTemplate {
     }
 
     public EmailTemplate(String name, String subject, String body) {
+        this(name, subject, body, null);
+    }
+
+    public EmailTemplate(String name, String subject, String body, String tokenPurpose) {
         this.name = name;
         this.subject = subject;
         this.body = body;
+        this.tokenPurpose = tokenPurpose;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -73,6 +82,10 @@ public class EmailTemplate {
 
     public void setBody(String body) {
         this.body = body;
+    }
+
+    public String getTokenPurpose() {
+        return tokenPurpose;
     }
 
     public LocalDateTime getCreatedAt() {

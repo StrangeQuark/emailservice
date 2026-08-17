@@ -50,10 +50,10 @@ public abstract class BaseServiceTest {
         when(jwtUtility.validateToken()).thenReturn(true); // Integration line: Auth
         token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION);
+                LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION.name());
 
         confirmationTokenRepository.save(confirmationToken);
-        emailTemplateRepository.save(new EmailTemplate(testTemplateName, testTemplateSubject, testTemplateBody));
+        emailTemplateRepository.save(new EmailTemplate(testTemplateName, testTemplateSubject, testTemplateBody, TokenPurpose.REGISTRATION.name()));
     }
 
     @AfterEach
