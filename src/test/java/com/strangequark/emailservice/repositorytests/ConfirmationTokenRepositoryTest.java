@@ -22,7 +22,7 @@ public class ConfirmationTokenRepositoryTest extends BaseRepositoryTest {
     @BeforeEach
     void setup() {
         token = UUID.randomUUID();
-        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION);
+        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION.name());
 
         testEntityManager.persistAndFlush(confirmationToken);
     }

@@ -1,5 +1,6 @@
 package com.strangequark.emailservice.template;
 
+import com.strangequark.emailservice.token.TokenPurpose;
 import jakarta.transaction.Transactional;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -19,22 +20,24 @@ public class EmailTemplateInitializer implements ApplicationRunner {
         insertIfMissing(
                 "USER_REGISTER",
                 "Activate your account",
-                loadSignupHtml()
+                loadSignupHtml(),
+                TokenPurpose.REGISTRATION.name()
         );
 
         insertIfMissing(
                 "USER_PASSWORD_RESET",
                 "Reset your password",
-                loadPasswordResetHtml()
+                loadPasswordResetHtml(),
+                TokenPurpose.PASSWORD_RESET.name()
         );
     }
 
-    private void insertIfMissing(String name, String subject, String html) {
+    private void insertIfMissing(String name, String subject, String html, String tokenPurpose) {
         repository.findByName(name).ifPresentOrElse(
                 existing -> {
                 },
                 () -> repository.save(
-                        new EmailTemplate(name, subject, html)
+                        new EmailTemplate(name, subject, html, tokenPurpose)
                 )
         );
     }

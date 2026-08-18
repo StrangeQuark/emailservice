@@ -203,7 +203,7 @@ public class EmailService implements EmailSender {
                         LocalDateTime.now(),
                         LocalDateTime.now().plusMinutes(15),
                         request.getRecipient(),
-                        getTokenPurpose(request.getTemplateName())
+                        getTokenPurpose(template)
                 );
             }
 
@@ -225,6 +225,10 @@ public class EmailService implements EmailSender {
             LOGGER.info("Template email has been successfully sent");
             if(request.getIncludeToken()) {
                 confirmationTokenRepository.save(confirmationToken);
+
+                if(isSystemTokenPurpose(confirmationToken.getPurpose()))
+                    return ResponseEntity.ok(new Response("Template email successfully sent"));
+
                 return ResponseEntity.ok(new Response("Template email successfully sent", token));
             }
             return ResponseEntity.ok(new Response("Template email successfully sent"));
@@ -259,8 +263,11 @@ public class EmailService implements EmailSender {
             if(request.getBody() == null || request.getBody().equals(""))
                 throw new RuntimeException("Template body must not be null");
 
+            if(request.getTokenPurpose() != null && !request.getTokenPurpose().matches("[A-Z0-9_]+"))
+                throw new RuntimeException("Token purpose must contain only uppercase letters, numbers, and underscores");
+
             LOGGER.debug("Building the template object");
-            EmailTemplate template = new EmailTemplate(request.getTemplateName(), request.getSubject(), request.getBody());
+            EmailTemplate template = new EmailTemplate(request.getTemplateName(), request.getSubject(), request.getBody(), request.getTokenPurpose());
 
             emailTemplateRepository.save(template);
 
@@ -275,6 +282,71 @@ public class EmailService implements EmailSender {
         }
     }
 
+    public ResponseEntity<?> updateTemplateEmail(EmailRequest request, boolean requireJwt) {
+        LOGGER.info("Attempting to update template email");
+
+        try {
+            // Integration function start: Auth
+            if(requireJwt && !jwtUtility.validateToken()) {
+                LOGGER.error("Invalid JWT token");
+                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            }
+            // Integration function end: Auth
+            EmailTemplate template = emailTemplateRepository.findByName(request.getTemplateName())
+                    .orElseThrow(() -> new RuntimeException("Template was not found"));
+
+            if(request.getSubject() == null || request.getSubject().equals(""))
+                throw new RuntimeException("Template subject must not be null");
+
+            if(request.getBody() == null || request.getBody().equals(""))
+                throw new RuntimeException("Template body must not be null");
+
+            template.setSubject(request.getSubject());
+            template.setBody(request.getBody());
+            template.setUpdatedAt(LocalDateTime.now());
+
+            emailTemplateRepository.save(template);
+
+            LOGGER.info("Template successfully updated");
+            return ResponseEntity.ok(new Response("Template successfully updated"));
+        } catch (Exception ex) {
+            LOGGER.error("Failed to update template: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(
+                    new Response("Failed to update template: " + ex.getMessage())
+            );
+        }
+    }
+
+    public ResponseEntity<?> deleteTemplateEmail(String templateName, boolean requireJwt) {
+        LOGGER.info("Attempting to delete template email");
+
+        try {
+            // Integration function start: Auth
+            if(requireJwt && !jwtUtility.validateToken()) {
+                LOGGER.error("Invalid JWT token");
+                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            }
+            // Integration function end: Auth
+            if(templateName.equals("USER_REGISTER") || templateName.equals("USER_PASSWORD_RESET"))
+                throw new RuntimeException("System templates cannot be deleted");
+
+            EmailTemplate template = emailTemplateRepository.findByName(templateName)
+                    .orElseThrow(() -> new RuntimeException("Template was not found"));
+
+            emailTemplateRepository.delete(template);
+
+            LOGGER.info("Template successfully deleted");
+            return ResponseEntity.ok(new Response("Template successfully deleted"));
+        } catch (Exception ex) {
+            LOGGER.error("Failed to delete template: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(
+                    new Response("Failed to delete template: " + ex.getMessage())
+            );
+        }
+    }
+
     @Transactional
     public ResponseEntity<?> confirmToken(UUID token) {
         LOGGER.info("Attempting to confirm token");
@@ -284,7 +356,7 @@ public class EmailService implements EmailSender {
         try {
             confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
-            if (confirmationToken.getPurpose() != TokenPurpose.REGISTRATION) {
+            if (!TokenPurpose.REGISTRATION.name().equals(confirmationToken.getPurpose())) {
                 return ResponseEntity.status(404).body(new Response("Token not found"));
             }
 
@@ -321,7 +393,7 @@ public class EmailService implements EmailSender {
         try {
             ConfirmationToken confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
-            if (confirmationToken.getPurpose() != TokenPurpose.REGISTRATION) {
+            if (!TokenPurpose.REGISTRATION.name().equals(confirmationToken.getPurpose())) {
                 return ResponseEntity.status(404).body(new Response("Token not found"));
             }
 
@@ -376,7 +448,7 @@ public class EmailService implements EmailSender {
         try {
             confirmationToken = confirmationTokenRepository.findByToken(token).orElseThrow(() -> new IllegalStateException("Token not found"));
 
-            if (confirmationToken.getPurpose() != TokenPurpose.PASSWORD_RESET) {
+            if (!TokenPurpose.PASSWORD_RESET.name().equals(confirmationToken.getPurpose())) {
                 return ResponseEntity.status(404).body(new Response("Token not found"));
             }
 
@@ -455,11 +527,15 @@ public class EmailService implements EmailSender {
         return body.replace("[[confirmationToken]]", token);
     }
 
-    private TokenPurpose getTokenPurpose(String templateName) {
-        return switch (templateName) {
-            case "USER_REGISTER" -> TokenPurpose.REGISTRATION;
-            case "USER_PASSWORD_RESET" -> TokenPurpose.PASSWORD_RESET;
-            default -> throw new IllegalArgumentException("This template cannot create a confirmation token");
-        };
+    private String getTokenPurpose(EmailTemplate template) {
+        if(template.getTokenPurpose() == null || template.getTokenPurpose().equals(""))
+            throw new IllegalArgumentException("This template cannot create a confirmation token");
+
+        return template.getTokenPurpose();
+    }
+
+    private boolean isSystemTokenPurpose(String tokenPurpose) {
+        return TokenPurpose.REGISTRATION.name().equals(tokenPurpose)
+                || TokenPurpose.PASSWORD_RESET.name().equals(tokenPurpose);
     }
 }

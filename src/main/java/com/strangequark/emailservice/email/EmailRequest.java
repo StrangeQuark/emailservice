@@ -9,6 +9,7 @@ public class EmailRequest {
     private String subject;
     private boolean includeToken;
     private String templateName;
+    private String tokenPurpose;
     private Map<String, String> templateVariables;
 
     public EmailRequest() {
@@ -86,6 +87,14 @@ public class EmailRequest {
 
     public void setTemplateName(String templateName) {
         this.templateName = templateName;
+    }
+
+    public String getTokenPurpose() {
+        return tokenPurpose;
+    }
+
+    public void setTokenPurpose(String tokenPurpose) {
+        this.tokenPurpose = tokenPurpose;
     }
 
     public Map<String, String> getTemplateVariables() {

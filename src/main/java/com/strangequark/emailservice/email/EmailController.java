@@ -35,6 +35,16 @@ public class EmailController {
         return emailService.createTemplateEmail(request, true);
     }
 
+    @PutMapping(path = "/update-template-email")
+    public ResponseEntity<?> updateTemplateEmail(@RequestBody EmailRequest request) {
+        return emailService.updateTemplateEmail(request, true);
+    }
+
+    @DeleteMapping(path = "/delete-template-email")
+    public ResponseEntity<?> deleteTemplateEmail(@RequestParam("templateName") String templateName) {
+        return emailService.deleteTemplateEmail(templateName, true);
+    }
+
     @GetMapping(path = "/confirm-token")
     public ResponseEntity<?> confirmToken(@RequestParam("token") UUID token) {
         return emailService.confirmToken(token);
