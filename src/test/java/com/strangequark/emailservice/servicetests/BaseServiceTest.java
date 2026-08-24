@@ -47,7 +47,7 @@ public abstract class BaseServiceTest {
 
     @BeforeEach
     void setup() {
-        when(jwtUtility.validateToken()).thenReturn(true); // Integration line: Auth
+        when(jwtUtility.validateEmailApiAccess()).thenReturn(true); // Integration line: Auth
         token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION.name());

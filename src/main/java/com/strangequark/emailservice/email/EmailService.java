@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 
@@ -119,9 +118,9 @@ public class EmailService implements EmailSender {
 
     public ResponseEntity<?> sendEmail(EmailRequest request, boolean requireJwt) {
         // Integration function start: Auth
-        if(requireJwt && !jwtUtility.validateToken()) {
-            LOGGER.error("Invalid JWT token");
-            return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+        if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
+            LOGGER.error("JWT does not have permission to access the email API");
+            return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
         }
         // Integration function end: Auth
 
@@ -159,9 +158,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateToken()) {
-                LOGGER.error("Invalid JWT token");
-                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
+                LOGGER.error("JWT does not have permission to access the email API");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
             }
             // Integration function end: Auth
             EmailTemplate template = emailTemplateRepository.findByName(templateName)
@@ -183,9 +182,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateToken()) {
-                LOGGER.error("Invalid JWT token");
-                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
+                LOGGER.error("JWT does not have permission to access the email API");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
             }
             // Integration function end: Auth
 
@@ -246,9 +245,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateToken()) {
-                LOGGER.error("Invalid JWT token");
-                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
+                LOGGER.error("JWT does not have permission to access the email API");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
             }
             // Integration function end: Auth
             if(request.getTemplateName() == null || request.getTemplateName().equals(""))
@@ -287,9 +286,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateToken()) {
-                LOGGER.error("Invalid JWT token");
-                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
+                LOGGER.error("JWT does not have permission to access the email API");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
             }
             // Integration function end: Auth
             EmailTemplate template = emailTemplateRepository.findByName(request.getTemplateName())
@@ -323,9 +322,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateToken()) {
-                LOGGER.error("Invalid JWT token");
-                return ResponseEntity.status(400).body(new Response("Invalid JWT token"));
+            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
+                LOGGER.error("JWT does not have permission to access the email API");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
             }
             // Integration function end: Auth
             if(templateName.equals("USER_REGISTER") || templateName.equals("USER_PASSWORD_RESET"))

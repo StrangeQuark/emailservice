@@ -61,6 +61,17 @@ public class EmailServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void emailApiAccessRequiredTest() {
+        Mockito.when(jwtUtility.validateEmailApiAccess()).thenReturn(false);
+        EmailRequest emailRequest = new EmailRequest("recipient@test.com", "sender@test.com",
+                "Email body", "Email subject", false);
+
+        ResponseEntity<?> response = emailService.sendEmail(emailRequest, true);
+
+        Assertions.assertEquals(403, response.getStatusCode().value());
+    }
+
+    @Test
     void getTemplateEmailTest() {
         ResponseEntity<?> response =  emailService.getTemplateEmail(testTemplateName, false);
 

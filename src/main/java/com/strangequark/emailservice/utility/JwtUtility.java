@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims; // Integration line: Telemetry
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.security.Key;
+import java.util.List;
 
 @Service
 public class JwtUtility {
@@ -23,22 +25,30 @@ public class JwtUtility {
     @Value("${ACCESS_SECRET_KEY}")
     private String SECRET_KEY;
 
-    public boolean validateToken() {
-        LOGGER.debug("Attempting to validate JWT");
+    public boolean validateEmailApiAccess() {
+        LOGGER.debug("Attempting to validate email API access");
 
         try {
             String token = getTokenFromHeader();
             Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
 
-            Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
-                    .parseClaimsJws(token);
+                    .parseClaimsJws(token)
+                    .getBody();
 
-            LOGGER.debug("JWT is valid");
+            List<String> authorizations = claims.get("authorizations", List.class);
+
+            if(authorizations == null || !authorizations.contains("EMAIL_API_ACCESS")) {
+                LOGGER.error("JWT does not have EMAIL_API_ACCESS");
+                return false;
+            }
+
+            LOGGER.debug("JWT has email API access");
             return true;
         } catch (Exception ex) {
-            LOGGER.error("Failed to validate token: " + ex.getMessage());
+            LOGGER.error("Failed to validate email API access: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return false;
         }
@@ -55,12 +65,21 @@ public class JwtUtility {
             HttpServletRequest request = attrs.getRequest();
             String authHeader = request.getHeader("Authorization");
 
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                throw new RuntimeException("Missing or invalid Authorization header");
+            if(authHeader != null && authHeader.startsWith("Bearer ")) {
+                LOGGER.debug("Token successfully retrieved from header");
+                return authHeader.substring(7);
             }
 
-            LOGGER.debug("Token successfully retrieved from header");
-            return authHeader.substring(7); // Remove "Bearer "
+            if(request.getCookies() != null) {
+                for(Cookie cookie : request.getCookies()) {
+                    if(cookie.getName().equals("access_token") && !cookie.getValue().isBlank()) {
+                        LOGGER.debug("Token successfully retrieved from cookie");
+                        return cookie.getValue();
+                    }
+                }
+            }
+
+            throw new RuntimeException("Missing or invalid Authorization header and access_token cookie");
         } catch (Exception ex) {
             LOGGER.error("Failed to get token from header: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
