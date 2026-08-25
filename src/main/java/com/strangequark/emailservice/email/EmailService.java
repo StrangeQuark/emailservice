@@ -64,6 +64,10 @@ public class EmailService implements EmailSender {
 
     @Override
     public ResponseEntity<?> send(String recipient, String sender, String body, String subject) {
+        return send(recipient, sender, body, subject, null);
+    }
+
+    public ResponseEntity<?> send(String recipient, String sender, String body, String subject, String userId) {
         LOGGER.info("Attempting to send an email");
 
         if(!emailValidator.test(recipient)) {
@@ -89,7 +93,7 @@ public class EmailService implements EmailSender {
             try {
                 telemetryUtility.sendTelemetryEvent("email-send",
                         Map.of(
-                                "userId", jwtUtility.extractId(), // Integration line: Auth
+                                "userId", userId == null ? jwtUtility.extractId() : userId, // Integration line: Auth
                                 "sender-domain", sender.substring(sender.indexOf("@") + 1),
                                 "recipient-domain", recipient.substring(recipient.indexOf("@") + 1)
                         )
@@ -117,6 +121,10 @@ public class EmailService implements EmailSender {
     }
 
     public ResponseEntity<?> sendEmail(EmailRequest request, boolean requireJwt) {
+        return sendEmail(request, requireJwt, null);
+    }
+
+    public ResponseEntity<?> sendEmail(EmailRequest request, boolean requireJwt, String userId) {
         // Integration function start: Auth
         if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
             LOGGER.error("JWT does not have permission to access the email API");
@@ -135,7 +143,8 @@ public class EmailService implements EmailSender {
             ResponseEntity<?> response = send(request.getRecipient(),
                     request.getSender(),
                     request.getBody(),
-                    request.getSubject());
+                    request.getSubject(),
+                    userId);
             if(response.getStatusCode().value() != 200) {
                 LOGGER.error(response.toString());
                 return response;
@@ -178,6 +187,10 @@ public class EmailService implements EmailSender {
     }
 
     public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt) {
+        return sendTemplateEmail(request, requireJwt, null);
+    }
+
+    public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt, String userId) {
         LOGGER.info("Sending template email");
 
         try {
@@ -215,7 +228,8 @@ public class EmailService implements EmailSender {
             ResponseEntity<?> response = send(request.getRecipient(),
                     request.getSender(),
                     body,
-                    template.getSubject());
+                    template.getSubject(),
+                    userId);
             if(response.getStatusCode().value() != 200) {
                 LOGGER.error(response.toString());
                 return response;
