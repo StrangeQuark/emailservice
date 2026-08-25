@@ -28,7 +28,6 @@ public abstract class BaseServiceTest {
     static {
         System.setProperty("ENCRYPTION_KEY", "8C636049C7763F06A35A17E86A542B15");
         System.setProperty("SERVICE_SECRET_EMAIL", "testClientPassword"); // Integration line: Auth
-        System.setProperty("ACCESS_SECRET_KEY", "4C96564053ADF2405FA490EDE8DE779CA8568689F47BBBF63BE58313CE1C0531"); // Integration line: Auth
     }
 
     @Autowired

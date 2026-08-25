@@ -35,7 +35,7 @@ public class WebSecurityConfig {
                                 "/api/email/enable-user",
                                 "/api/email/reset-user-password"
                         ).permitAll()
-                        .requestMatchers("/api/**").authenticated() // Integration line: Auth
+                        .requestMatchers("/api/**").hasAuthority("EMAIL_API_ACCESS") // Integration line: Auth
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
