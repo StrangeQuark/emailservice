@@ -190,5 +190,20 @@ public class EmailServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(404, response.getStatusCode().value());
         Assertions.assertEquals("Token not found", ((Response) response.getBody()).getMessage());
-    }// Integration function end: Auth
+    }
+
+    @Test
+    void passwordResetTokenIsNotConfirmedWhenAuthResetFailsTest() {
+        UUID passwordResetToken = UUID.randomUUID();
+        confirmationTokenRepository.save(new ConfirmationToken(passwordResetToken, LocalDateTime.now(),
+                LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.PASSWORD_RESET.name()));
+
+        Mockito.doThrow(new RuntimeException("Auth service unavailable"))
+                .when(authUtility).resetPassword("test@test.com", "newPassword");
+
+        emailService.resetUserPassword(passwordResetToken, "newPassword");
+
+        Assertions.assertNull(confirmationTokenRepository.findByToken(passwordResetToken).get().getConfirmedAt());
+    }
+    // Integration function end: Auth
 }

@@ -6,6 +6,7 @@ import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.token.TokenPurpose;
 import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
+import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -38,6 +39,8 @@ public abstract class BaseServiceTest {
     public EmailTemplateRepository emailTemplateRepository;
     @MockitoBean // Integration line: Auth
     public JwtUtility jwtUtility; // Integration line: Auth
+    @MockitoBean // Integration line: Auth
+    public AuthUtility authUtility; // Integration line: Auth
 
     public UUID token;
     public String testTemplateName = "USER_REGISTER";
