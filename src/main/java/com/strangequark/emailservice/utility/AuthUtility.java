@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,6 +25,9 @@ public class AuthUtility {
     @Value("${SERVICE_SECRET_EMAIL}")
     private String SERVICE_SECRET_EMAIL;
 
+    @Autowired
+    private RestTemplate restTemplate;
+
     public String authenticateServiceAccount() {
         try {
             LOGGER.debug("Attempting to authenticate service account");
@@ -37,7 +41,7 @@ public class AuthUtility {
 
             HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestBody, headers);
 
-            String response = new RestTemplate().postForObject(
+            String response = restTemplate.postForObject(
                     "http://auth-service:6001/api/auth/service-account/authenticate",
                     requestEntity,
                     String.class
@@ -78,7 +82,7 @@ public class AuthUtility {
 
             String url = "http://auth-service:6001/api/auth/user/enable-user";
 
-            new RestTemplate().postForObject(url, requestEntity, String.class);
+            restTemplate.postForObject(url, requestEntity, String.class);
         } catch (JSONException ex) {
             LOGGER.error("Failed to enable user in auth utility: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -106,7 +110,7 @@ public class AuthUtility {
 
             String url = "http://auth-service:6001/api/auth/user/reset-password";
 
-            new RestTemplate().postForObject(url, requestEntity, String.class);
+            restTemplate.postForObject(url, requestEntity, String.class);
         } catch (JSONException ex) {
             LOGGER.error("Failed to reset user password in auth utility: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
