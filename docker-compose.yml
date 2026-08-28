@@ -99,7 +99,7 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
 networks:
   emaildb-network:
-    external: true
+    internal: true
   shared-network:
     external: true
 volumes:
