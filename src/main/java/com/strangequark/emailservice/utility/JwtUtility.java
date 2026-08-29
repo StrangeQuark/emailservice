@@ -30,10 +30,15 @@ public class JwtUtility {
     private String JWT_ISSUER;
 
     public boolean validateEmailApiAccess() {
-        LOGGER.debug("Attempting to validate email API access");
+        LOGGER.debug("Attempting to validate email API access from request");
+
+        return validateEmailApiAccessToken(getTokenFromHeader());
+    }
+
+    public boolean validateEmailApiAccessToken(String token) {
+        LOGGER.debug("Attempting to validate provided email API access token");
 
         try {
-            String token = getTokenFromHeader();
             Claims claims = getClaims(token);
 
             List<String> authorizations = claims.get("authorizations", List.class);
@@ -86,9 +91,14 @@ public class JwtUtility {
     }
     // Integration function start: Telemetry
     public String extractId() {
-        LOGGER.debug("Attempting to extract subject from JWT");
+        LOGGER.debug("Attempting to extract subject from JWT request");
 
-        String token = getTokenFromHeader();
+        return extractId(getTokenFromHeader());
+    }
+
+    public String extractId(String token) {
+        LOGGER.debug("Attempting to extract subject from provided JWT");
+
         Claims claims = getClaims(token);
 
         LOGGER.debug("Subject successfully extracted from JWT");

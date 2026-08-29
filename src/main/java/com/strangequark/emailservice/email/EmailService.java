@@ -12,11 +12,13 @@ import com.strangequark.emailservice.utility.TelemetryUtility; // Integration li
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.ResourceAccessException; // Integration line: Auth
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +44,8 @@ public class EmailService implements EmailSender {
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final EmailValidator emailValidator;
     private final EmailTemplateRepository emailTemplateRepository;
+    @Value("${email.public.base-url}")
+    private String EMAIL_PUBLIC_BASE_URL;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\{\\{\\s*([a-zA-Z][a-zA-Z0-9_]*)\\s*(?:\\|\\|(.+?))?\\s*}}");
     private static final Pattern SYSTEM_VAR_PATTERN = Pattern.compile("\\[\\[([a-zA-Z0-9_]+)]]");
     // Integration function start: Auth
@@ -64,6 +69,10 @@ public class EmailService implements EmailSender {
 
     @Override
     public ResponseEntity<?> send(String recipient, String sender, String body, String subject) {
+        return send(recipient, sender, body, subject, null);
+    }
+
+    public ResponseEntity<?> send(String recipient, String sender, String body, String subject, String userId) {
         LOGGER.info("Attempting to send an email");
 
         if(!emailValidator.test(recipient)) {
@@ -89,7 +98,7 @@ public class EmailService implements EmailSender {
             try {
                 telemetryUtility.sendTelemetryEvent("email-send",
                         Map.of(
-                                "userId", jwtUtility.extractId(), // Integration line: Auth
+                                "userId", userId == null ? jwtUtility.extractId() : userId, // Integration line: Auth
                                 "sender-domain", sender.substring(sender.indexOf("@") + 1),
                                 "recipient-domain", recipient.substring(recipient.indexOf("@") + 1)
                         )
@@ -117,6 +126,10 @@ public class EmailService implements EmailSender {
     }
 
     public ResponseEntity<?> sendEmail(EmailRequest request, boolean requireJwt) {
+        return sendEmail(request, requireJwt, null);
+    }
+
+    public ResponseEntity<?> sendEmail(EmailRequest request, boolean requireJwt, String userId) {
         // Integration function start: Auth
         if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
             LOGGER.error("JWT does not have permission to access the email API");
@@ -135,7 +148,8 @@ public class EmailService implements EmailSender {
             ResponseEntity<?> response = send(request.getRecipient(),
                     request.getSender(),
                     request.getBody(),
-                    request.getSubject());
+                    request.getSubject(),
+                    userId);
             if(response.getStatusCode().value() != 200) {
                 LOGGER.error(response.toString());
                 return response;
@@ -178,6 +192,10 @@ public class EmailService implements EmailSender {
     }
 
     public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt) {
+        return sendTemplateEmail(request, requireJwt, null);
+    }
+
+    public ResponseEntity<?> sendTemplateEmail(EmailRequest request, boolean requireJwt, String userId) {
         LOGGER.info("Sending template email");
 
         try {
@@ -206,8 +224,17 @@ public class EmailService implements EmailSender {
                 );
             }
 
+            Map<String, String> templateVariables = new HashMap<>();
+            if(request.getTemplateVariables() != null)
+                templateVariables.putAll(request.getTemplateVariables());
+
+            if(request.getTemplateName().equals("USER_REGISTER"))
+                templateVariables.putIfAbsent("link", EMAIL_PUBLIC_BASE_URL + "/confirm-email");
+            if(request.getTemplateName().equals("USER_PASSWORD_RESET"))
+                templateVariables.putIfAbsent("link", EMAIL_PUBLIC_BASE_URL + "/new-password");
+
             //Extract the template body and render template variables
-            String body = renderTemplateVars(template.getBody(), request.getTemplateVariables());
+            String body = renderTemplateVars(template.getBody(), templateVariables);
             if(request.getIncludeToken())
                 body = insertConfirmationToken(body, token.toString());
 
@@ -215,7 +242,8 @@ public class EmailService implements EmailSender {
             ResponseEntity<?> response = send(request.getRecipient(),
                     request.getSender(),
                     body,
-                    template.getSubject());
+                    template.getSubject(),
+                    userId);
             if(response.getStatusCode().value() != 200) {
                 LOGGER.error(response.toString());
                 return response;
@@ -408,7 +436,7 @@ public class EmailService implements EmailSender {
 
                 EmailRequest emailRequest = new EmailRequest(confirmationToken.getEmail(),
                         "donotreply@emailservice.com", true, "USER_REGISTER",
-                        Map.of("link", "http://localhost:6080/confirm-email?token=" + token));
+                        null);
 
                 sendTemplateEmail(emailRequest, false);
                 return ResponseEntity.status(409).body(new Response("The token has expired - A new confirmation email has been sent"));
@@ -536,5 +564,14 @@ public class EmailService implements EmailSender {
     private boolean isSystemTokenPurpose(String tokenPurpose) {
         return TokenPurpose.REGISTRATION.name().equals(tokenPurpose)
                 || TokenPurpose.PASSWORD_RESET.name().equals(tokenPurpose);
+    }
+
+    @Scheduled(fixedRateString = "${confirmation.token.cleanup.interval}")
+    public void deleteExpiredConfirmationTokens() {
+        for(ConfirmationToken confirmationToken : confirmationTokenRepository.findAll()) {
+            if(confirmationToken.getExpiresAt().isBefore(LocalDateTime.now())
+                    || confirmationToken.getConfirmedAt() != null)
+                confirmationTokenRepository.delete(confirmationToken);
+        }
     }
 }

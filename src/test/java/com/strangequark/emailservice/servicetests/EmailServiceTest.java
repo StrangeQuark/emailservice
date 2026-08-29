@@ -16,16 +16,18 @@ import org.springframework.http.ResponseEntity;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 
+import java.io.ByteArrayOutputStream;
 import java.util.UUID; // Integration line: Auth
 import java.time.LocalDateTime;
 
 public class EmailServiceTest extends BaseServiceTest {
     @Autowired
     private EmailService emailService;
+    private MimeMessage mimeMessage;
 
     @BeforeEach
     void init() {
-        MimeMessage mimeMessage = new MimeMessage((Session) null);
+        mimeMessage = new MimeMessage((Session) null);
         Mockito.when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
     }
 
@@ -175,6 +177,29 @@ public class EmailServiceTest extends BaseServiceTest {
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertNotNull(confirmationTokenRepository.findByToken(token).get().getConfirmedAt());
     }
+
+    @Test
+    void deleteExpiredConfirmationTokensTest() {
+        UUID expiredToken = UUID.randomUUID();
+        UUID confirmedToken = UUID.randomUUID();
+        UUID activeToken = UUID.randomUUID();
+        ConfirmationToken expiredConfirmationToken = new ConfirmationToken(expiredToken, LocalDateTime.now().minusMinutes(30),
+                LocalDateTime.now().minusMinutes(15), "expired@test.com", TokenPurpose.REGISTRATION.name());
+        ConfirmationToken confirmedConfirmationToken = new ConfirmationToken(confirmedToken, LocalDateTime.now(),
+                LocalDateTime.now().plusMinutes(15), "confirmed@test.com", TokenPurpose.REGISTRATION.name());
+        ConfirmationToken activeConfirmationToken = new ConfirmationToken(activeToken, LocalDateTime.now(),
+                LocalDateTime.now().plusMinutes(15), "active@test.com", TokenPurpose.REGISTRATION.name());
+        confirmedConfirmationToken.setConfirmedAt(LocalDateTime.now());
+        confirmationTokenRepository.save(expiredConfirmationToken);
+        confirmationTokenRepository.save(confirmedConfirmationToken);
+        confirmationTokenRepository.save(activeConfirmationToken);
+
+        emailService.deleteExpiredConfirmationTokens();
+
+        Assertions.assertTrue(confirmationTokenRepository.findByToken(expiredToken).isEmpty());
+        Assertions.assertTrue(confirmationTokenRepository.findByToken(confirmedToken).isEmpty());
+        Assertions.assertTrue(confirmationTokenRepository.findByToken(activeToken).isPresent());
+    }
     // Integration function start: Auth
     @Test
     void enableUserTest() {
@@ -185,10 +210,49 @@ public class EmailServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void expiredRegistrationTokenSendsNewConfirmationLinkTest() throws Exception {
+        UUID expiredToken = UUID.randomUUID();
+        ConfirmationToken confirmationToken = new ConfirmationToken(expiredToken, LocalDateTime.now().minusMinutes(30),
+                LocalDateTime.now().minusMinutes(15), "expired@test.com", TokenPurpose.REGISTRATION.name());
+        confirmationTokenRepository.save(confirmationToken);
+        EmailTemplate template = emailTemplateRepository.findByName(testTemplateName).get();
+        template.setBody("<a href=\"{{link}}?token=[[confirmationToken]]\">Confirm registration</a>");
+        emailTemplateRepository.save(template);
+
+        ResponseEntity<?> response = emailService.enableUser(expiredToken);
+
+        UUID newToken = confirmationTokenRepository.findAll().stream()
+                .filter(savedToken -> savedToken.getEmail().equals("expired@test.com"))
+                .filter(savedToken -> !savedToken.getToken().equals(expiredToken))
+                .findFirst().get().getToken();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        mimeMessage.writeTo(outputStream);
+
+        Assertions.assertEquals(409, response.getStatusCode().value());
+        Assertions.assertTrue(outputStream.toString().contains("http://email.test/confirm-email?token=" + newToken));
+        Assertions.assertFalse(outputStream.toString().contains(expiredToken.toString()));
+    }
+
+    @Test
     void resetUserPasswordTest() {
         ResponseEntity<?> response = emailService.resetUserPassword(UUID.randomUUID(), "newPassword");
 
         Assertions.assertEquals(404, response.getStatusCode().value());
         Assertions.assertEquals("Token not found", ((Response) response.getBody()).getMessage());
-    }// Integration function end: Auth
+    }
+
+    @Test
+    void passwordResetTokenIsNotConfirmedWhenAuthResetFailsTest() {
+        UUID passwordResetToken = UUID.randomUUID();
+        confirmationTokenRepository.save(new ConfirmationToken(passwordResetToken, LocalDateTime.now(),
+                LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.PASSWORD_RESET.name()));
+
+        Mockito.doThrow(new RuntimeException("Auth service unavailable"))
+                .when(authUtility).resetPassword("test@test.com", "newPassword");
+
+        emailService.resetUserPassword(passwordResetToken, "newPassword");
+
+        Assertions.assertNull(confirmationTokenRepository.findByToken(passwordResetToken).get().getConfirmedAt());
+    }
+    // Integration function end: Auth
 }

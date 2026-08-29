@@ -10,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.mock.web.MockHttpServletRequest; // Integration line: Auth
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder; // Integration line: Auth
-import org.springframework.web.context.request.ServletRequestAttributes; // Integration line: Auth
 
 import java.util.Map; // Integration line: Telemetry
 
@@ -39,48 +36,62 @@ public class EmailEventListener {
     public void generalEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("General email event received");
         EmailRequest emailRequest = record.value();
-        setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
+        String userId = null;
+        // Integration function start: Auth
+        String token = getTokenFromKafkaConsumerRecord(record);
+        if(!jwtUtility.validateEmailApiAccessToken(token)) {
+            LOGGER.error("Invalid JWT token - general email event skipped");
+            return;
+        }
+        userId = jwtUtility.extractId(token);
+        // Integration function end: Auth
         // Integration function start: Telemetry
         telemetryUtility.sendTelemetryEvent("email-event-general", Map.of(
-                    "userId", jwtUtility.extractId() // Integration line: Auth
+                    "userId", userId // Integration line: Auth
                 )
         ); // Integration function end: Telemetry
 
-        emailService.sendEmail(emailRequest, true);
+        emailService.sendEmail(emailRequest, false, userId);
     }
 
     @KafkaListener(topics = "template-email-events", groupId = "email-group")
     public void templateEmailEvents(ConsumerRecord<String, EmailRequest> record) {
         LOGGER.info("Template email event received");
         EmailRequest emailRequest = record.value();
-        setAuthHeaderFromKafkaConsumerRecord(record); // Integration line: Auth
+        String userId = null;
+        // Integration function start: Auth
+        String token = getTokenFromKafkaConsumerRecord(record);
+        if(!jwtUtility.validateEmailApiAccessToken(token)) {
+            LOGGER.error("Invalid JWT token - template email event skipped");
+            return;
+        }
+        userId = jwtUtility.extractId(token);
+        // Integration function end: Auth
         // Integration function start: Telemetry
         telemetryUtility.sendTelemetryEvent("email-event-template", Map.of(
-                        "userId", jwtUtility.extractId() // Integration line: Auth
+                        "userId", userId // Integration line: Auth
                 )
         ); // Integration function end: Telemetry
 
-        emailService.sendTemplateEmail(emailRequest, true);
+        emailService.sendTemplateEmail(emailRequest, false, userId);
     }
     // Integration function start: Auth
-    public void setAuthHeaderFromKafkaConsumerRecord(ConsumerRecord<String, ?> record) {
-        LOGGER.info("Setting authorization header from Kafka consumer record");
+    public String getTokenFromKafkaConsumerRecord(ConsumerRecord<String, ?> record) {
+        LOGGER.info("Getting authorization token from Kafka consumer record");
 
-        // Extract JWT from Kafka header
         Header authHeader = record.headers().lastHeader("Authorization");
         if (authHeader == null) {
             LOGGER.error("Missing Authorization header in Kafka message");
-            return;
+            return null;
         }
         String token = new String(authHeader.value());
 
-        // Create a mock request with Authorization header
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
-        mockRequest.addHeader("Authorization", token);
+        if(!token.startsWith("Bearer ")) {
+            LOGGER.error("Invalid Authorization header in Kafka message");
+            return null;
+        }
 
-        // Bind the mock request to the current thread
-        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
-        RequestContextHolder.setRequestAttributes(attrs);
-        LOGGER.info("Kafka consumer auth header set");
+        LOGGER.info("Kafka consumer authorization token retrieved");
+        return token.substring(7);
     } // Integration function end: Auth
 }
