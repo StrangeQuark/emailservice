@@ -97,10 +97,10 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6005/api/email/get-template-email?templateName=USER_REGISTER",
+					"raw": "http://localhost:6005/api/email/get-template-email",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -110,13 +110,16 @@
 						"api",
 						"email",
 						"get-template-email"
-					],
-					"query": [
-						{
-							"key": "templateName",
-							"value": "USER_REGISTER"
-						}
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"templateName\": \"USER_REGISTER\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []

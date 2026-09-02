@@ -20,9 +20,9 @@ public class EmailController {
         return emailService.sendEmail(request, true);
     }
 
-    @GetMapping(path = "/get-template-email")
-    public ResponseEntity<?> getTemplateEmail(@RequestParam("templateName") String templateName) {
-        return emailService.getTemplateEmail(templateName, true);
+    @PostMapping(path = "/get-template-email")
+    public ResponseEntity<?> getTemplateEmail(@RequestBody EmailRequest emailRequest) {
+        return emailService.getTemplateEmail(emailRequest.getTemplateName(), true);
     }
 
     @PostMapping(path = "/send-template-email")
@@ -41,8 +41,8 @@ public class EmailController {
     }
 
     @DeleteMapping(path = "/delete-template-email")
-    public ResponseEntity<?> deleteTemplateEmail(@RequestParam("templateName") String templateName) {
-        return emailService.deleteTemplateEmail(templateName, true);
+    public ResponseEntity<?> deleteTemplateEmail(@RequestBody EmailRequest emailRequest) {
+        return emailService.deleteTemplateEmail(emailRequest.getTemplateName(), true);
     }
 
     @GetMapping(path = "/confirm-token")
