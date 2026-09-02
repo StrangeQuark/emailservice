@@ -12,8 +12,10 @@ pipeline {
             steps {
                 script {
                     def response = httpRequest(
-                        url: VAULT_URL + '/api/vault/cicd/emailservice/e3',
-                        httpMode: 'GET',
+                        url: VAULT_URL + '/api/vault/cicd',
+                        httpMode: 'POST',
+                        contentType: 'APPLICATION_JSON',
+                        requestBody: '{"serviceName":"emailservice","environmentName":"e3"}',
                         customHeaders: [
                             [name: 'X-CICD-TOKEN', value: CICD_TOKEN, maskValue: true]
                         ],
