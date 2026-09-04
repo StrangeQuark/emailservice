@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -282,7 +283,7 @@ public class EmailService implements EmailSender {
                 throw new RuntimeException("Template name must not be null");
 
             if(emailTemplateRepository.findByName(request.getTemplateName()).isPresent())
-                throw new RuntimeException("Template with name " + request.getTemplateName() + " already exists");
+                throw new ConflictException("Template with name " + request.getTemplateName() + " already exists");
 
             if(request.getSubject() == null || request.getSubject().equals(""))
                 throw new RuntimeException("Template subject must not be null");
@@ -300,6 +301,16 @@ public class EmailService implements EmailSender {
 
             LOGGER.info("Template creation successful");
             return ResponseEntity.ok(new Response("Template creation successful"));
+        } catch(ConflictException ex) {
+            LOGGER.error("Template already exists: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(409).body(new Response(ex.getMessage()));
+        } catch(DataIntegrityViolationException ex) {
+            LOGGER.error("Database rejected duplicate template creation: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(409).body(
+                    new Response("Template with name " + request.getTemplateName() + " already exists")
+            );
         } catch (Exception ex) {
             LOGGER.error("Failed to create template: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);

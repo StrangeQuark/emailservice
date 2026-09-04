@@ -111,6 +111,17 @@ public class EmailServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void duplicateTemplateReturnsConflictTest() {
+        EmailRequest emailRequest = new EmailRequest("Duplicate body", "Duplicate subject", testTemplateName);
+
+        ResponseEntity<?> response = emailService.createTemplateEmail(emailRequest, false);
+
+        Assertions.assertEquals(409, response.getStatusCode().value());
+        Assertions.assertEquals("Template with name " + testTemplateName + " already exists",
+                ((Response) response.getBody()).getMessage());
+    }
+
+    @Test
     void updateTemplateEmailTest() {
         EmailRequest emailRequest = new EmailRequest("UPDATED TEMPLATE BODY", "UPDATED TEMPLATE SUBJECT", testTemplateName);
 
@@ -136,7 +147,7 @@ public class EmailServiceTest extends BaseServiceTest {
 
     @Test
     void deleteSystemTemplateEmailTest() {
-        ResponseEntity<?> response = emailService.deleteTemplateEmail(testTemplateName, false);
+        ResponseEntity<?> response = emailService.deleteTemplateEmail("USER_REGISTER", false);
 
         Assertions.assertEquals(400, response.getStatusCode().value());
     }
