@@ -55,7 +55,11 @@ public abstract class BaseServiceTest {
                 LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION.name());
 
         confirmationTokenRepository.save(confirmationToken);
-        emailTemplateRepository.save(new EmailTemplate(testTemplateName, testTemplateSubject, testTemplateBody, TokenPurpose.REGISTRATION.name()));
+        EmailTemplate emailTemplate = emailTemplateRepository.findByName(testTemplateName)
+                .orElse(new EmailTemplate(testTemplateName, testTemplateSubject, testTemplateBody, TokenPurpose.REGISTRATION.name()));
+        emailTemplate.setSubject(testTemplateSubject);
+        emailTemplate.setBody(testTemplateBody);
+        emailTemplateRepository.save(emailTemplate);
     }
 
     @AfterEach
