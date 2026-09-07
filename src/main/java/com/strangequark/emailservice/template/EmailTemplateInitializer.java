@@ -30,6 +30,13 @@ public class EmailTemplateInitializer implements ApplicationRunner {
                 loadPasswordResetHtml(),
                 TokenPurpose.PASSWORD_RESET.name()
         );
+
+        insertIfMissing(
+                "USER_INVITE",
+                "You have been invited",
+                "<p>You have been invited to create an account.</p><p><a href=\"{{link}}#inviteToken={{inviteToken}}\">Accept invitation</a></p><p>Your invitation code is: {{inviteToken}}</p>",
+                null
+        );
     }
 
     private void insertIfMissing(String name, String subject, String html, String tokenPurpose) {
