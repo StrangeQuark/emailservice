@@ -233,6 +233,8 @@ public class EmailService implements EmailSender {
                 templateVariables.putIfAbsent("link", EMAIL_PUBLIC_BASE_URL + "/confirm-email");
             if(request.getTemplateName().equals("USER_PASSWORD_RESET"))
                 templateVariables.putIfAbsent("link", EMAIL_PUBLIC_BASE_URL + "/new-password");
+            if(request.getTemplateName().equals("USER_INVITE"))
+                templateVariables.putIfAbsent("link", EMAIL_PUBLIC_BASE_URL + "/register");
 
             //Extract the template body and render template variables
             String body = renderTemplateVars(template.getBody(), templateVariables);
