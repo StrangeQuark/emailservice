@@ -85,6 +85,23 @@ public class EmailServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void getAllTemplateEmailsTest() {
+        ResponseEntity<?> response = emailService.getAllTemplateEmails(false);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals(1, ((java.util.List<?>) response.getBody()).size());
+    }
+
+    @Test
+    void emailTemplateManagementAccessRequiredTest() {
+        Mockito.when(jwtUtility.validateEmailTemplateManagement()).thenReturn(false);
+
+        ResponseEntity<?> response = emailService.getAllTemplateEmails(true);
+
+        Assertions.assertEquals(403, response.getStatusCode().value());
+    }
+
+    @Test
     void sendTemplateEmailTest() {
         EmailRequest emailRequest = new EmailRequest("recipient@test.com", "sender@test.com",
                 true, testTemplateName, null);

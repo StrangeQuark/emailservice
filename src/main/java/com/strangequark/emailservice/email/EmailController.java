@@ -25,6 +25,11 @@ public class EmailController {
         return emailService.getTemplateEmail(emailRequest.getTemplateName(), true);
     }
 
+    @GetMapping(path = "/get-all-template-emails")
+    public ResponseEntity<?> getAllTemplateEmails() {
+        return emailService.getAllTemplateEmails(true);
+    }
+
     @PostMapping(path = "/send-template-email")
     public ResponseEntity<?> sendTemplateEmail(@RequestBody EmailRequest request) {
         return emailService.sendTemplateEmail(request, true);

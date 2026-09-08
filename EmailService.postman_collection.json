@@ -125,6 +125,19 @@
 			"response": []
 		},
 		{
+			"name": "Get All Template Emails",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [{ "key": "token", "value": "{{ACCESS_TOKEN}}", "type": "string" }]
+				},
+				"method": "GET",
+				"header": [],
+				"url": "http://localhost:6005/api/email/get-all-template-emails"
+			},
+			"response": []
+		},
+		{
 			"name": "Send Template Email",
 			"request": {
 				"auth": {
