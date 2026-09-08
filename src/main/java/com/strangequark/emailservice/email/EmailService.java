@@ -173,9 +173,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
-                LOGGER.error("JWT does not have permission to access the email API");
-                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
+            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+                LOGGER.error("JWT does not have permission to manage email templates");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
             // Integration function end: Auth
             EmailTemplate template = emailTemplateRepository.findByName(templateName)
@@ -189,6 +189,24 @@ public class EmailService implements EmailSender {
             return ResponseEntity.status(400).body(
                     new Response("Failed to retrieve template email: " + ex.getMessage())
             );
+        }
+    }
+
+    public ResponseEntity<?> getAllTemplateEmails(boolean requireJwt) {
+        LOGGER.info("Getting all template emails");
+
+        try {
+            // Integration function start: Auth
+            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+                LOGGER.error("JWT does not have permission to manage email templates");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
+            }
+            // Integration function end: Auth
+            return ResponseEntity.ok(emailTemplateRepository.findAll());
+        } catch(Exception ex) {
+            LOGGER.error("Failed to retrieve template emails: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(new Response("Failed to retrieve template emails: " + ex.getMessage()));
         }
     }
 
@@ -276,9 +294,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
-                LOGGER.error("JWT does not have permission to access the email API");
-                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
+            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+                LOGGER.error("JWT does not have permission to manage email templates");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
             // Integration function end: Auth
             if(request.getTemplateName() == null || request.getTemplateName().equals(""))
@@ -327,9 +345,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
-                LOGGER.error("JWT does not have permission to access the email API");
-                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
+            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+                LOGGER.error("JWT does not have permission to manage email templates");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
             // Integration function end: Auth
             EmailTemplate template = emailTemplateRepository.findByName(request.getTemplateName())
@@ -363,9 +381,9 @@ public class EmailService implements EmailSender {
 
         try {
             // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
-                LOGGER.error("JWT does not have permission to access the email API");
-                return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
+            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+                LOGGER.error("JWT does not have permission to manage email templates");
+                return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
             // Integration function end: Auth
             if(templateName.equals("USER_REGISTER") || templateName.equals("USER_PASSWORD_RESET"))

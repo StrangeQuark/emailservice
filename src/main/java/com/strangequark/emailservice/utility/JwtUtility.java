@@ -38,20 +38,31 @@ public class JwtUtility {
     public boolean validateEmailApiAccessToken(String token) {
         LOGGER.debug("Attempting to validate provided email API access token");
 
+        return validateAuthorization(token, "EMAIL_API_ACCESS");
+    }
+
+    public boolean validateEmailTemplateManagement() {
+        LOGGER.debug("Attempting to validate email template management access from request");
+
+        return validateAuthorization(getTokenFromHeader(), "EMAIL_TEMPLATE_MANAGEMENT");
+    }
+
+    private boolean validateAuthorization(String token, String authorizationName) {
+
         try {
             Claims claims = getClaims(token);
 
             List<String> authorizations = claims.get("authorizations", List.class);
 
-            if(authorizations == null || !authorizations.contains("EMAIL_API_ACCESS")) {
-                LOGGER.error("JWT does not have EMAIL_API_ACCESS");
+            if(authorizations == null || !authorizations.contains(authorizationName)) {
+                LOGGER.error("JWT does not have " + authorizationName);
                 return false;
             }
 
-            LOGGER.debug("JWT has email API access");
+            LOGGER.debug("JWT has " + authorizationName);
             return true;
         } catch (Exception ex) {
-            LOGGER.error("Failed to validate email API access: " + ex.getMessage());
+            LOGGER.error("Failed to validate authorization: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return false;
         }
