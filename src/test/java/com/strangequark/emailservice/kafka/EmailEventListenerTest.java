@@ -1,5 +1,3 @@
-// Integration file: Auth
-
 package com.strangequark.emailservice.kafka;
 
 import com.strangequark.emailservice.email.EmailRequest;
@@ -27,6 +25,7 @@ public class EmailEventListenerTest {
         emailEventListener = new EmailEventListener(emailService);
         emailEventListener.jwtUtility = jwtUtility;
         emailEventListener.telemetryUtility = telemetryUtility;
+        emailEventListener.authserviceIntegration = true;
     }
 
     @Test
@@ -50,5 +49,16 @@ public class EmailEventListenerTest {
         emailEventListener.generalEmailEvents(record);
 
         verifyNoInteractions(emailService, telemetryUtility);
+    }
+
+    @Test
+    void generalEmailEventWithoutAuthserviceIntegrationTest() {
+        emailEventListener.authserviceIntegration = false;
+        EmailRequest emailRequest = new EmailRequest();
+        ConsumerRecord<String, EmailRequest> record = new ConsumerRecord<>("general-email-events", 0, 0, "key", emailRequest);
+
+        emailEventListener.generalEmailEvents(record);
+
+        verify(emailService).sendEmail(emailRequest, false, null);
     }
 }

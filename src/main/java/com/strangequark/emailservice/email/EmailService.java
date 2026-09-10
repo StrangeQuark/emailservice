@@ -6,9 +6,9 @@ import com.strangequark.emailservice.template.EmailTemplateRepository;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.token.TokenPurpose;
-import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
-import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
-import com.strangequark.emailservice.utility.TelemetryUtility; // Integration line: Telemetry
+import com.strangequark.emailservice.utility.AuthUtility;
+import com.strangequark.emailservice.utility.JwtUtility;
+import com.strangequark.emailservice.utility.TelemetryUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.ResourceAccessException; // Integration line: Auth
+import org.springframework.web.client.ResourceAccessException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -47,18 +47,18 @@ public class EmailService implements EmailSender {
     private final EmailTemplateRepository emailTemplateRepository;
     @Value("${email.public.base-url}")
     private String EMAIL_PUBLIC_BASE_URL;
+    @Value("${authservice.integration}")
+    private boolean authserviceIntegration;
+    @Value("${telemetryservice.integration}")
+    private boolean telemetryserviceIntegration;
     private static final Pattern VAR_PATTERN = Pattern.compile("\\{\\{\\s*([a-zA-Z][a-zA-Z0-9_]*)\\s*(?:\\|\\|(.+?))?\\s*}}");
     private static final Pattern SYSTEM_VAR_PATTERN = Pattern.compile("\\[\\[([a-zA-Z0-9_]+)]]");
-    // Integration function start: Auth
     @Autowired
     AuthUtility authUtility;
     @Autowired
     JwtUtility jwtUtility;
-    // Integration function end: Auth
-    // Integration function start: Telemetry
     @Autowired
     TelemetryUtility telemetryUtility;
-    // Integration function end: Telemetry
 
     public EmailService(JavaMailSender javaMailSender, ConfirmationTokenRepository confirmationTokenRepository,
                         EmailValidator emailValidator, EmailTemplateRepository emailTemplateRepository) {
@@ -95,19 +95,21 @@ public class EmailService implements EmailSender {
             mimeMessageHelper.setSubject(subject);
             mimeMessageHelper.setFrom(sender);
             javaMailSender.send(mimeMessage);
-            // Integration function start: Telemetry
-            try {
-                telemetryUtility.sendTelemetryEvent("email-send",
-                        Map.of(
-                                "userId", userId == null ? jwtUtility.extractId() : userId, // Integration line: Auth
-                                "sender-domain", sender.substring(sender.indexOf("@") + 1),
-                                "recipient-domain", recipient.substring(recipient.indexOf("@") + 1)
-                        )
-                );
-            } catch (Exception ex) {
-                LOGGER.error("Failed to send telemetry event during email send: " + ex.getMessage());
-                LOGGER.debug("Stack trace: ", ex);
-            }// Integration function end: Telemetry
+            if(telemetryserviceIntegration) {
+                try {
+                    Map<String, Object> telemetryMetadata = new HashMap<>();
+
+                    if(authserviceIntegration)
+                        telemetryMetadata.put("userId", userId == null ? jwtUtility.extractId() : userId);
+
+                    telemetryMetadata.put("sender-domain", sender.substring(sender.indexOf("@") + 1));
+                    telemetryMetadata.put("recipient-domain", recipient.substring(recipient.indexOf("@") + 1));
+                    telemetryUtility.sendTelemetryEvent("email-send", telemetryMetadata);
+                } catch (Exception ex) {
+                    LOGGER.error("Failed to send telemetry event during email send: " + ex.getMessage());
+                    LOGGER.debug("Stack trace: ", ex);
+                }
+            }
 
             LOGGER.info("Email successfully sent");
             return ResponseEntity.ok(new Response("Your email has been sent"));
@@ -131,12 +133,10 @@ public class EmailService implements EmailSender {
     }
 
     public ResponseEntity<?> sendEmail(EmailRequest request, boolean requireJwt, String userId) {
-        // Integration function start: Auth
-        if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
+        if(authserviceIntegration && requireJwt && !jwtUtility.validateEmailApiAccess()) {
             LOGGER.error("JWT does not have permission to access the email API");
             return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
         }
-        // Integration function end: Auth
 
         try {
             if(request.getIncludeToken()) {
@@ -172,12 +172,10 @@ public class EmailService implements EmailSender {
         LOGGER.info("Getting template email");
 
         try {
-            // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+            if(authserviceIntegration && requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
                 LOGGER.error("JWT does not have permission to manage email templates");
                 return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
-            // Integration function end: Auth
             EmailTemplate template = emailTemplateRepository.findByName(templateName)
                     .orElseThrow(() -> new RuntimeException("Template was not found"));
 
@@ -196,12 +194,10 @@ public class EmailService implements EmailSender {
         LOGGER.info("Getting all template emails");
 
         try {
-            // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+            if(authserviceIntegration && requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
                 LOGGER.error("JWT does not have permission to manage email templates");
                 return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
-            // Integration function end: Auth
             return ResponseEntity.ok(emailTemplateRepository.findAll());
         } catch(Exception ex) {
             LOGGER.error("Failed to retrieve template emails: " + ex.getMessage());
@@ -218,12 +214,10 @@ public class EmailService implements EmailSender {
         LOGGER.info("Sending template email");
 
         try {
-            // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailApiAccess()) {
+            if(authserviceIntegration && requireJwt && !jwtUtility.validateEmailApiAccess()) {
                 LOGGER.error("JWT does not have permission to access the email API");
                 return ResponseEntity.status(403).body(new Response("JWT does not have permission to access the email API"));
             }
-            // Integration function end: Auth
 
             LOGGER.info("Setting email values from template");
             EmailTemplate template = emailTemplateRepository.findByName(request.getTemplateName())
@@ -293,12 +287,10 @@ public class EmailService implements EmailSender {
         LOGGER.info("Attempting to create template email");
 
         try {
-            // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+            if(authserviceIntegration && requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
                 LOGGER.error("JWT does not have permission to manage email templates");
                 return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
-            // Integration function end: Auth
             if(request.getTemplateName() == null || request.getTemplateName().equals(""))
                 throw new RuntimeException("Template name must not be null");
 
@@ -344,12 +336,10 @@ public class EmailService implements EmailSender {
         LOGGER.info("Attempting to update template email");
 
         try {
-            // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+            if(authserviceIntegration && requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
                 LOGGER.error("JWT does not have permission to manage email templates");
                 return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
-            // Integration function end: Auth
             EmailTemplate template = emailTemplateRepository.findByName(request.getTemplateName())
                     .orElseThrow(() -> new RuntimeException("Template was not found"));
 
@@ -380,12 +370,10 @@ public class EmailService implements EmailSender {
         LOGGER.info("Attempting to delete template email");
 
         try {
-            // Integration function start: Auth
-            if(requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
+            if(authserviceIntegration && requireJwt && !jwtUtility.validateEmailTemplateManagement()) {
                 LOGGER.error("JWT does not have permission to manage email templates");
                 return ResponseEntity.status(403).body(new Response("JWT does not have permission to manage email templates"));
             }
-            // Integration function end: Auth
             if(templateName.equals("USER_REGISTER") || templateName.equals("USER_PASSWORD_RESET"))
                 throw new RuntimeException("System templates cannot be deleted");
 
@@ -439,13 +427,16 @@ public class EmailService implements EmailSender {
             );
         }
 
-        telemetryUtility.sendTelemetryEvent("email-confirm-token", Map.of()); // Integration line: Telemetry
+        telemetryUtility.sendTelemetryEvent("email-confirm-token", Map.of());
         LOGGER.info("Token successfully confirmed");
         return ResponseEntity.ok(new Response("Token successfully confirmed", confirmationToken.getEmail()));
     }
-    // Integration function start: Auth
+
     @Transactional
     public ResponseEntity<?> enableUser(UUID token) {
+        if(!authserviceIntegration)
+            return ResponseEntity.notFound().build();
+
         LOGGER.info("Attempting to enable user");
 
         try {
@@ -492,13 +483,16 @@ public class EmailService implements EmailSender {
             );
         }
 
-        telemetryUtility.sendTelemetryEvent("email-enable-user", Map.of()); // Integration line: Telemetry
+        telemetryUtility.sendTelemetryEvent("email-enable-user", Map.of());
         LOGGER.info("Account verified, user enabled");
         return ResponseEntity.ok(new Response("Account verified, user enabled"));
     }
 
     @Transactional
     public ResponseEntity<?> resetUserPassword(UUID token, String newPassword) {
+        if(!authserviceIntegration)
+            return ResponseEntity.notFound().build();
+
         LOGGER.info("Attempting to confirm token and reset user password");
 
         ConfirmationToken confirmationToken;
@@ -524,7 +518,7 @@ public class EmailService implements EmailSender {
 
             authUtility.resetPassword(confirmationToken.getEmail(), newPassword);
             confirmationTokenRepository.updateConfirmedAt(token, LocalDateTime.now());
-            telemetryUtility.sendTelemetryEvent("email-reset-password", Map.of()); // Integration line: Telemetry
+            telemetryUtility.sendTelemetryEvent("email-reset-password", Map.of());
         } catch (Exception ex) {
             LOGGER.error("Failed to reset user password: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -534,8 +528,6 @@ public class EmailService implements EmailSender {
         LOGGER.info("User password successfully reset");
         return ResponseEntity.ok(new Response("User password successfully reset", confirmationToken.getEmail()));
     }
-    // Integration function end: Auth
-
     private String renderTemplateVars(String template, Map<String, String> vars) {
         if (template == null || template.isBlank())
             return template;

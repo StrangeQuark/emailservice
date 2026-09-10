@@ -1,5 +1,3 @@
-// Integration file: Auth
-
 package com.strangequark.emailservice.utility;
 
 import org.json.JSONException;
@@ -24,11 +22,16 @@ public class AuthUtility {
 
     @Value("${SERVICE_SECRET_EMAIL}")
     private String SERVICE_SECRET_EMAIL;
+    @Value("${authservice.integration}")
+    private boolean authserviceIntegration;
 
     @Autowired
     private RestTemplate restTemplate;
 
     public String authenticateServiceAccount() {
+        if(!authserviceIntegration)
+            return null;
+
         try {
             LOGGER.debug("Attempting to authenticate service account");
 
@@ -63,6 +66,9 @@ public class AuthUtility {
     }
 
     public void enableUser(String email) {
+        if(!authserviceIntegration)
+            return;
+
         LOGGER.debug("Attempting to enable user");
 
         try {
@@ -90,6 +96,9 @@ public class AuthUtility {
     }
 
     public void resetPassword(String email, String newPassword) {
+        if(!authserviceIntegration)
+            return;
+
         LOGGER.debug("Attempting to reset user password");
 
         try {

@@ -1,5 +1,3 @@
-// Integration file: Auth
-
 package com.strangequark.emailservice.security.config;
 
 import io.jsonwebtoken.Claims;
@@ -32,12 +30,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Value("${JWT_ISSUER}")
     private String JWT_ISSUER;
+    @Value("${authservice.integration}")
+    private boolean authserviceIntegration;
 
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
+
+        if(!authserviceIntegration) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String token = getToken(request);
 

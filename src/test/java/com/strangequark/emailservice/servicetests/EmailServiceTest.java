@@ -2,7 +2,7 @@ package com.strangequark.emailservice.servicetests;
 
 import com.strangequark.emailservice.email.EmailRequest;
 import com.strangequark.emailservice.email.EmailService;
-import com.strangequark.emailservice.response.Response; // Integration line: Auth
+import com.strangequark.emailservice.response.Response;
 import com.strangequark.emailservice.template.EmailTemplate;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.TokenPurpose;
@@ -12,12 +12,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 
 import java.io.ByteArrayOutputStream;
-import java.util.UUID; // Integration line: Auth
+import java.util.UUID;
 import java.time.LocalDateTime;
 
 public class EmailServiceTest extends BaseServiceTest {
@@ -29,6 +30,7 @@ public class EmailServiceTest extends BaseServiceTest {
     void init() {
         mimeMessage = new MimeMessage((Session) null);
         Mockito.when(javaMailSender.createMimeMessage()).thenReturn(mimeMessage);
+        ReflectionTestUtils.setField(emailService, "authserviceIntegration", true);
     }
 
     @Test
@@ -71,6 +73,18 @@ public class EmailServiceTest extends BaseServiceTest {
         ResponseEntity<?> response = emailService.sendEmail(emailRequest, true);
 
         Assertions.assertEquals(403, response.getStatusCode().value());
+    }
+
+    @Test
+    void emailApiAccessIsNotRequiredWithoutAuthserviceIntegrationTest() {
+        ReflectionTestUtils.setField(emailService, "authserviceIntegration", false);
+        Mockito.when(jwtUtility.validateEmailApiAccess()).thenReturn(false);
+        EmailRequest emailRequest = new EmailRequest("recipient@test.com", "sender@test.com",
+                "Email body", "Email subject", false);
+
+        ResponseEntity<?> response = emailService.sendEmail(emailRequest, true);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
@@ -228,7 +242,6 @@ public class EmailServiceTest extends BaseServiceTest {
         Assertions.assertTrue(confirmationTokenRepository.findByToken(confirmedToken).isEmpty());
         Assertions.assertTrue(confirmationTokenRepository.findByToken(activeToken).isPresent());
     }
-    // Integration function start: Auth
     @Test
     void enableUserTest() {
         ResponseEntity<?> response = emailService.enableUser(UUID.randomUUID());
@@ -282,5 +295,4 @@ public class EmailServiceTest extends BaseServiceTest {
 
         Assertions.assertNull(confirmationTokenRepository.findByToken(passwordResetToken).get().getConfirmedAt());
     }
-    // Integration function end: Auth
 }
