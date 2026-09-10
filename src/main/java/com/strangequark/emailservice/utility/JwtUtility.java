@@ -1,8 +1,6 @@
-// Integration file: Auth
-
 package com.strangequark.emailservice.utility;
 
-import io.jsonwebtoken.Claims; // Integration line: Telemetry
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import jakarta.servlet.http.Cookie;
@@ -100,7 +98,6 @@ public class JwtUtility {
             return null;
         }
     }
-    // Integration function start: Telemetry
     public String extractId() {
         LOGGER.debug("Attempting to extract subject from JWT request");
 
@@ -124,8 +121,6 @@ public class JwtUtility {
             return false;
         }
     }
-    // Integration function end: Telemetry
-
     private Claims getClaims(String token) {
         try {
             Key key = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(Decoders.BASE64.decode(JWT_PUBLIC_KEY)));

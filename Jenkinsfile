@@ -2,32 +2,33 @@ pipeline {
     agent { label 'linux-agent' }
 
     environment {
-        VAULT_URL = credentials('VAULT_URL') // Integration line: Vault
-        CICD_TOKEN = credentials('EMAIL_CICD_TOKEN') // Integration line: Vault
+        VAULT_URL = credentials('VAULT_URL')
+        CICD_TOKEN = credentials('EMAIL_CICD_TOKEN')
+        VAULTSERVICE_ENABLED = credentials('VAULTSERVICE_ENABLED')
     }
 
     stages {
-        // Integration function start: Vault
         stage("Retrieve Env Vars") {
             steps {
                 script {
-                    def response = httpRequest(
-                        url: VAULT_URL + '/api/vault/cicd',
-                        httpMode: 'POST',
-                        contentType: 'APPLICATION_JSON',
-                        requestBody: '{"serviceName":"emailservice","environmentName":"e3"}',
-                        customHeaders: [
-                            [name: 'X-CICD-TOKEN', value: CICD_TOKEN, maskValue: true]
-                        ],
-                        validResponseCodes: '200'
-                    )
+                    if(VAULTSERVICE_ENABLED == "true") {
+                        def response = httpRequest(
+                            url: VAULT_URL + '/api/vault/cicd',
+                            httpMode: 'POST',
+                            contentType: 'APPLICATION_JSON',
+                            requestBody: '{"serviceName":"emailservice","environmentName":"e3"}',
+                            customHeaders: [
+                                [name: 'X-CICD-TOKEN', value: CICD_TOKEN, maskValue: true]
+                            ],
+                            validResponseCodes: '200'
+                        )
 
-                    writeFile file: 'emailservice.env', text: response.content
-                    echo "Environment variables written to emailservice.env"
+                        writeFile file: 'emailservice.env', text: response.content
+                        echo "Environment variables written to emailservice.env"
+                    }
                 }
             }
         }
-        // Integration function end: Vault
         stage("Deploy & Health Check") {
             steps {
                 script {
@@ -69,12 +70,10 @@ pipeline {
             }
         }
     }
-    // Integration function start: Vault
     post {
         always {
             sh "rm -f emailservice.env"
             echo "Cleaned up emailservice.env"
         }
     }
-    // Integration function end: Vault
 }

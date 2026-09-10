@@ -5,8 +5,8 @@ import com.strangequark.emailservice.template.EmailTemplateRepository;
 import com.strangequark.emailservice.token.ConfirmationToken;
 import com.strangequark.emailservice.token.ConfirmationTokenRepository;
 import com.strangequark.emailservice.token.TokenPurpose;
-import com.strangequark.emailservice.utility.JwtUtility; // Integration line: Auth
-import com.strangequark.emailservice.utility.AuthUtility; // Integration line: Auth
+import com.strangequark.emailservice.utility.JwtUtility;
+import com.strangequark.emailservice.utility.AuthUtility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -19,7 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.mockito.Mockito.when; // Integration line: Auth
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -28,7 +28,7 @@ public abstract class BaseServiceTest {
 
     static {
         System.setProperty("ENCRYPTION_KEY", "8C636049C7763F06A35A17E86A542B15");
-        System.setProperty("SERVICE_SECRET_EMAIL", "testClientPassword"); // Integration line: Auth
+        System.setProperty("SERVICE_SECRET_EMAIL", "testClientPassword");
     }
 
     @Autowired
@@ -37,10 +37,10 @@ public abstract class BaseServiceTest {
     public JavaMailSender javaMailSender;
     @Autowired
     public EmailTemplateRepository emailTemplateRepository;
-    @MockitoBean // Integration line: Auth
-    public JwtUtility jwtUtility; // Integration line: Auth
-    @MockitoBean // Integration line: Auth
-    public AuthUtility authUtility; // Integration line: Auth
+    @MockitoBean
+    public JwtUtility jwtUtility;
+    @MockitoBean
+    public AuthUtility authUtility;
 
     public UUID token;
     public String testTemplateName = "USER_REGISTER";
@@ -49,8 +49,8 @@ public abstract class BaseServiceTest {
 
     @BeforeEach
     void setup() {
-        when(jwtUtility.validateEmailApiAccess()).thenReturn(true); // Integration line: Auth
-        when(jwtUtility.validateEmailTemplateManagement()).thenReturn(true); // Integration line: Auth
+        when(jwtUtility.validateEmailApiAccess()).thenReturn(true);
+        when(jwtUtility.validateEmailTemplateManagement()).thenReturn(true);
         token = UUID.randomUUID();
         ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(),
                 LocalDateTime.now().plusMinutes(15), "test@test.com", TokenPurpose.REGISTRATION.name());
