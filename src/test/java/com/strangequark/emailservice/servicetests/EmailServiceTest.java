@@ -124,7 +124,8 @@ public class EmailServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertNull(((Response) response.getBody()).getToken());
-        Assertions.assertEquals(confirmationTokenRepository.findAll().get(1).getEmail(), "recipient@test.com");
+        Assertions.assertTrue(confirmationTokenRepository.findAll().stream()
+                .anyMatch(token -> token.getEmail().equals("recipient@test.com")));
     }
 
     @Test
