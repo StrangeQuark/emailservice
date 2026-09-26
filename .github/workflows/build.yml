@@ -44,6 +44,9 @@ jobs:
             echo "Environment variables written to emailservice.env"
           fi
 
+      - name: Run tests
+        run: ./mvnw clean test
+
       - name: Deploy & Health Check
         run: |
           set -e
