@@ -218,6 +218,42 @@
 			"response": []
 		},
 		{
+			"name": "Update Template",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [{ "key": "token", "value": "{{ACCESS_TOKEN}}", "type": "string" }]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"templateName\": \"TEST_TEMPLATE\",\n    \"subject\": \"Updated test subject\",\n    \"body\": \"Updated test body\"\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:6005/api/email/update-template-email"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Template",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [{ "key": "token", "value": "{{ACCESS_TOKEN}}", "type": "string" }]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"templateName\": \"TEST_TEMPLATE\"\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": "http://localhost:6005/api/email/delete-template-email"
+			},
+			"response": []
+		},
+		{
 			"name": "Confirm token",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
