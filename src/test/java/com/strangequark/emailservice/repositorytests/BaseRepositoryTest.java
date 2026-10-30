@@ -2,9 +2,12 @@ package com.strangequark.emailservice.repositorytests;
 
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.actuate.autoconfigure.observation.ObservationAutoConfiguration;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
+@ImportAutoConfiguration(ObservationAutoConfiguration.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
 public class BaseRepositoryTest {
