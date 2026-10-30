@@ -17,6 +17,8 @@ services:
     labels:
       com.msinit.log: "true"
       com.msinit.service-name: "emailservice"
+    logging:
+      driver: json-file
     depends_on:
       - email-db
       - maildev
